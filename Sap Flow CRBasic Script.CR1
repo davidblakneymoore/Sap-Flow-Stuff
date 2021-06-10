@@ -1,0 +1,305 @@
+'Sap Flow CRBasic Script
+
+'By David Moore
+'University of New Hampshire Ecohydrology Lab
+'June 2021
+
+'This script is for heat-pulse sap flow sensors following the
+'heat ratio method (Burgess et al., 2001) and the maximum
+'heat ratio method (J. Gutierrez Lopez, unpublished).
+
+'This method uses three probes (an upper probe, a middle
+'probe, and a lower probe). For sensors read in single-ended
+'mode, the upper and lower probes each have three copper-
+'constantan (Type T) thermocouples. For each of these two
+'probes, there is one constantan wire and there are three
+'copper wires. The three copper wires are soldered to the
+'constantan wire at different positions (typically either
+'0.5, 1.75, and 3.0 cm or 0.5, 1.0, and 1.5 cm from the body
+'of the probe) to allow sap flow to be estimated at three
+'different depths (an outer depth, a middle depth, and an
+'inner depth). For sensors read in differential mode, the
+'upper and lower probes each contain one copper-constantan
+'(Type T) thermocouple set at whichever depth is desired.
+'These differential-mode sensors contain only one constantan
+'and one copper wire in both the upper and lower probes. The
+'middle probe is a heater which consists of a three-loop coil
+'of nichrome wire which spans the position(s) of the
+'thermocouple(s).
+
+'This script should be used with a Measurement and Control
+'Datalogger (CR1000) and a 16 or 32 Channel Relay Multiplexer
+'(AM16/32). It can be used to read sap flow sensor
+'thermocouples in both differential and single-ended mode.
+
+'Multiplexer Wiring and Use Instructions:
+'For Sensors Read in Single-Ended Mode:
+'Make sure the multiplexer is in single-ended ('4X16') mode.
+'The 'RES' port on the multiplexer is wired to the 'COM1 Tx'
+'port on the datalogger. The 'CLK' port on the multiplexer is
+'wired to the 'COM1 Rx' port on the datalogger. The 'G' port
+'on the multiplexer is wired to the 'Power Out G' port on the
+'datalogger. The '12V' port on the multiplexer is wired to
+'the 'Power Out 12V' port on the datalogger. The 'COM ODD H'
+'port on the multiplexer is wired to the 'SE 1' port on the
+'datalogger. The 'COM ODD L' port on the multiplexer is wired
+'to the 'SE 2' port on the datalogger. The 'COM' ground port
+'on the multiplexer is wired to a ground port on the
+'datalogger. The 'COM EVEN H' port on the multiplexer is
+'wired to the 'SE 3' port on the datalogger. The 'COM EVEN L'
+'port on the multiplexer is wired to the 'SE 4' port on the
+'datalogger.
+'For Sensors Read in Differential Mode:
+'Make sure the multiplexer is in differential ('2X32') mode.
+'The 'RES' port on the multiplexer is wired to the 'C1' port
+'on the datalogger. The 'CLK' port on the multiplexer is
+'wired to the 'C2' port on the datalogger. The 'G' port on
+'the multiplexer is wired to the 'Power Out G' port on the
+'datalogger. The '12V' port on the multiplexer is wired to
+'the 'Power Out 12V' port on the datalogger. The 'COM ODD H'
+'port on the multiplexer is wired to the 'DIFF 1 H' port on
+'the datalogger. The 'COM ODD L' port on the multiplexer is
+'wired to the 'DIFF 1 L' port on the datalogger. The 'COM'
+'ground port on the multiplexer is wired to a ground port on
+'the datalogger. The 'COM EVEN H' port on the multiplexer is
+'wired to the 'DIFF 2 H' port on the datalogger. The 'COM 
+'EVEN L' port on the multiplexer is wired to the 'DIFF 2 L'
+'port on the datalogger.
+'Note that the multiplexer-to-datalogger wiring does not
+'change when switching between single-ended and differential
+'modes; only the names of the ports on the datalogger and the
+'multiplexer change (single-ended-mode port names are in blue
+'and differential-mode port names are in white).
+
+'Heater Wiring Instructions:
+'Heaters should be wired to the 'SW12V' port.
+
+'Thermocouple Wiring Instructions:
+'For Sensors Read in Single-Ended Mode:
+'Copper wires should be wired to the 'H' and the 'L' ports on
+'the multiplexer. In our lab, we have standardized the order
+'of these wires so that the outer copper wire on the upper
+'probe (which has green housing) is first, followed by the
+'middle copper wire on the upper probe (which has white
+'housing), the inner copper wire on the upper probe (which
+'has red housing), the outer copper wire on the lower probe
+'(which has blue housing), the middle copper wire on the
+'lower probe (which has brown housing), and the inner copper
+'wire on the lower probe (which has black housing). All the
+'constantan wires are connected to the ground ports on the
+'multiplexer. Group wires by sensor on the multiplexer.
+'For Sensors Read in Differential Mode:
+'Copper wires should be wired to the 'H' ports on the
+'multiplexer and constantan wires should be wired to the 'L'
+'ports on the multiplexer. Wires from the same thermocouple
+'should be connected to the same number port on the
+'multiplexer.
+
+'Soil Temperature Sensor (Type E Thermocouple Burial Probe
+'(105E-L)) Wiring Instructions (this sensor is not required):
+'Wire the purple wire to port '8H' on the datalogger; wire
+'the pink wire to port '8L' on the datalogger; wire the clear
+'wire to the ground symbol next to either port '8H' or port
+''8L' on the datalogger.
+
+'If you do not need to collect raw data, please comment out
+'the following lines of code so that you can save memory on
+'the datalogger: 142, 176-188, 218, and 301-302.
+
+'Works Cited:
+'Burgess, S.S.O., M.A. Adams, N.C. Turner, C.R. Beverly, C.K.
+'Ong, A.A.H. Khan, and T.M. Bleby. 2001. An improved heat
+'pulse method to measure low and reverse rates of sap flow in
+'woody plants. Tree Physiol. 21:589-598.
+
+'Station Name:
+StationName Sap_Flow
+
+'Constants:
+Const Time_Between_Measurements = 15 'This constant sets the time (in min) between measurement cycles.
+Const Differential_Measurements = True 'This constant specifies whether thermocouples are being read in differential mode. It will be either 'True' or 'False', and it must be the opposite of whatever 'Single_Ended_Measurements' is.
+Const Single_Ended_Measurements = False 'This constant specifies whether thermocouples are being read in single-ended mode. It will be either 'True' or 'False', and it must be the opposite of whatever 'Differential_Measurements' is.
+Const Soil_Temperature_Probe_Present = False 'This constant specifies whether or not a soil temperature probe is connected.
+Const Number_of_Thermocouples = 32 'This constant specifies how many measurements to take on the multiplexer. For differential-mode measurements, the maximum number of thermocouples you can read is 32; for single-ended-mode measurements, the maximum number you can read is 64.
+Const Use_Moving_Averages = True 'This constant determines whether or not moving averages are used in the maximum heat ratio method for generating the after-heat-pulse temperatures. If this is 'False', the maximum raw data point is used instead of the maximum moving average.
+Const Measurement_Time_Before_Heat_Pulse = 20 'This constant specifies the amount of time (in s) immediately prior to the heat pulse being emitted that temperature measurements are recorded for the 'Before_Heat_Pulse_Temperature' columns in the data tables.
+Const Heat_Pulse_Time = 3 'This constant specifies the amount of time (in s) that the heater is on for during each measurement cycle.
+Const Measurement_Time_After_Heat_Pulse = 120 'This constant specifies the amount of time (in s) that measurements are made when the heat pulse ends during each measurement cycle.
+Const Start_of_After_Heat_Pulse_Temperature = 60 'This constant specifies the time (in s) after the heat pulse ends when after-heat-pulse temperature measurements begin.
+Const End_of_After_Heat_Pulse_Temperature = 100 'This constant specifies the time (in s) after the heat pulse ends when after-heat-pulse temperature measurements end.
+Const Moving_Average_Window = 5 'This constant specifies how many values are used when computing moving averages for the maximum heat ratio method. It must be a positive, odd integer or else the moving average window won't be centered on the correct point.
+Const Collect_Raw_Data = False 'This constant specifies whether or not raw data will be stored. Storing raw data uses up a significant amount of memory on the datalogger.
+
+'Public Variables:
+Public Panel_Temperature : Units Panel_Temperature = ° C 'This variable measures the temperature (in ° C) of the panel.
+Public Battery_Voltage : Units Battery_Voltage = V 'This variable measures the voltage (in V) of the 12-V battery that powers the heaters.
+Public Soil_Temperature : Units Soil_Temperature = ° C 'This variable measures the soil temperature (in ° C) if a soil temperature probe is connected.
+Public Heater_Is_On As Boolean 'This variable keeps track of whether or not the heaters are on.
+Public Time : Units Time = s 'This variable counts time (in s), starting with the time measurements commence before the heat pulse.
+Public Before_Heat_Pulse_Temperature(Number_of_Thermocouples) : Units Before_Heat_Pulse_Temperature() = ° C 'This vector of temperatures (in ° C) is for both the heat ratio and the maximum heat ratio methods.
+Public After_Heat_Pulse_Temperature(Number_of_Thermocouples) : Units After_Heat_Pulse_Temperature() = ° C 'This vector of temperatures (in ° C) is for the heat ratio method.
+Public Maximum_After_Heat_Pulse_Temperature(Number_of_Thermocouples) : Units Maximum_After_Heat_Pulse_Temperature() = ° C 'This vector of temperatures (in ° C) is for the maximum heat ratio method.
+Public Measurement_Times(Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Measurement_Time_After_Heat_Pulse) : Units Measurement_Times() = s 'This vector records the times that measurements (temperatures) are recorded by the datalogger.
+Public Complete_Array(Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Measurement_Time_After_Heat_Pulse, Number_of_Thermocouples) : Units Complete_Array() = ° C 'This array stores all of the raw measurements (in ° C).
+Public Before_Heat_Pulse_Temperature_Array(Measurement_Time_Before_Heat_Pulse, Number_of_Thermocouples) : Units Before_Heat_Pulse_Temperature_Array() = ° C 'This array of temperatures (in ° C) is for both the heat ratio and the maximum heat ratio methods.
+Public After_Heat_Pulse_Temperature_Array_1(End_of_After_Heat_Pulse_Temperature - Start_of_After_Heat_Pulse_Temperature, Number_of_Thermocouples) : Units After_Heat_Pulse_Temperature_Array_1() = ° C 'This array of temperatures (in ° C) is for the heat ratio method.
+Public After_Heat_Pulse_Temperature_Array_2(End_of_After_Heat_Pulse_Temperature - Start_of_After_Heat_Pulse_Temperature, Number_of_Thermocouples) : Units After_Heat_Pulse_Temperature_Array_2() = ° C 'This array of temperatures (in ° C) is for the maximum heat ratio method.
+Public Moving_Average_Array(Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Measurement_Time_After_Heat_Pulse + 1 - Moving_Average_Window, Number_of_Thermocouples) : Units Moving_Average_Array() = ° C 'This array of temperature moving averages (in ° C) is for the maximum heat ratio method.
+
+'Private Variables:
+Dim i = 1 ''i' indexes the rows of the array, which represent times.
+Dim j = 1 ''j' indexes the columns of the array, which represent thermocouples.
+Dim p = 1 ''p' also indexes the rows of the array, which represent times.
+Dim q = 1 ''q' also indexes the columns of the array, which represent thermocouples.
+
+'Data Tables:
+DataTable (Heat_Ratio, True, -1)
+  DataInterval (0, Time_Between_Measurements, min, 0)
+  Sample (1, Panel_Temperature, FP2)
+  Minimum (1, Battery_Voltage, FP2, False, False)
+  Sample (1, Before_Heat_Pulse_Temperature(), FP2)
+  Sample (1, After_Heat_Pulse_Temperature(), FP2)
+  #If Soil_Temperature_Probe_Present Then
+    Sample (1, Soil_Temperature, FP2)
+  #EndIf
+EndTable
+DataTable (Maximum_Heat_Ratio, True, -1)
+  DataInterval (0, Time_Between_Measurements, min, 0)
+  Sample (1, Panel_Temperature, FP2)
+  Minimum (1, Battery_Voltage, FP2, False, False)
+  Sample (1, Before_Heat_Pulse_Temperature(), FP2)
+  Sample (1, Maximum_After_Heat_Pulse_Temperature(), FP2)
+  #If Soil_Temperature_Probe_Present Then
+    Sample (1, Soil_Temperature, FP2)
+  #EndIf
+EndTable
+DataTable (Raw_Data_1, True, -1)
+  DataInterval (0, Time_Between_Measurements, min, 0)
+  Sample (Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Measurement_Time_After_Heat_Pulse, Measurement_Times(), Long)
+  Sample (((Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Measurement_Time_After_Heat_Pulse) * Number_of_Thermocouples), Complete_Array(), FP2)
+EndTable
+DataTable (Raw_Data_2, True, -1)
+  DataInterval (0, Time_Between_Measurements, min, 0)
+  Sample (1, Panel_Temperature, FP2)
+  Minimum (1, Battery_Voltage, FP2, False, False)
+  #If Soil_Temperature_Probe_Present Then
+    Sample (1, Soil_Temperature, FP2)
+  #EndIf
+EndTable
+
+'The Main Program:
+BeginProg
+  Scan (1, Sec, 0, 0)
+    'Make sure the heaters are off.
+    SW12 (0)
+    Heater_Is_On = False
+    If IfTime (0, Time_Between_Measurements, min) Then
+      'Initialize the timer.
+      Time = Timer (1, sec, 4)
+      'Measure the battery voltage.
+      Battery (Battery_Voltage)
+      'Measure the panel temperature.
+      PanelTemp (Panel_Temperature, 250)
+      'Measure soil temperature if there's a soil temperature probe.
+      If Soil_Temperature_Probe_Present Then
+        TCDiff (Soil_Temperature, 1, mV2_5C, 8, TypeE, Panel_Temperature, True, 0, _60Hz, 1.0, 0)
+      EndIf
+      'Turn on the multiplexer.
+      PortSet (1, 1)
+      Delay (0, 100, mSec)
+      Do
+        If Time > Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Measurement_Time_After_Heat_Pulse
+          Exit Do
+        EndIf
+        i = 1
+        j = 1
+        If IfTime (0, 1, sec) Then
+          'Record the time.
+          Measurement_Times(i) = Status.Timestamp
+          'Record sap flow measurements (temperatures).
+          For j = 1 To Number_of_Thermocouples
+            PulsePort (1, 10)
+            If Differential_Measurements = True AND Single_Ended_Measurements = False
+              TCDiff (Complete_Array(i, j), 1, mV2_5C, 1, TypeT, Panel_Temperature, 0, 0, _60Hz, 1, 0)
+            EndIf
+            If Differential_Measurements = False AND Single_Ended_Measurements = True
+              TCSe (Complete_Array(i, j), 1, mV2_5C, 1, TypeT, Panel_Temperature, 0, 0, _60Hz, 1, 0)
+            EndIf
+          Next
+        EndIf
+        j = 1
+        'Turn the heater on at the right time.
+        If Heater_Is_On = False AND Time > Measurement_Time_Before_Heat_Pulse AND Time < Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time Then
+          SW12 (1)
+          Heater_Is_On = True
+        EndIf
+        'Turn the heater off at the right time.
+        If Heater_Is_On = True AND Time > Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time Then
+          SW12 (0)
+          Heater_Is_On = False
+        EndIf
+        i += 1
+      Loop
+      q = 1
+      p = 1
+      'Subset the raw data to create an array with only before-heat-pulse temperatures; this step is for both the heat ratio method and the maximum heat ratio method.
+      For q = 1 To Number_of_Thermocouples
+        For p = 1 To Measurement_Time_Before_Heat_Pulse
+          Before_Heat_Pulse_Temperature_Array(p, q) = Complete_Array(p, q)
+        Next
+      Next
+      q = 1
+      'Average the before-heat-pulse temperatures for each thermocouple separately; these values will appear in both the heat ratio method and the maximum heat ratio method data tables.
+      For q = 1 To Number_of_Thermocouples
+        AvgSpa (Before_Heat_Pulse_Temperature(q), Measurement_Time_Before_Heat_Pulse, Before_Heat_Pulse_Temperature_Array(-1, q))
+      Next
+      q = 1
+      p = 1
+      'Subset the raw data to create an array with only after-heat-pulse temperatures for the time period of interest for the heat ratio method.
+      For q = 1 To Number_of_Thermocouples
+        For p = 1 To End_of_After_Heat_Pulse_Temperature - Start_of_After_Heat_Pulse_Temperature
+          After_Heat_Pulse_Temperature_Array_1(p, q) = Complete_Array(Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Start_of_After_Heat_Pulse_Temperature - 1 + p, q)
+        Next
+      Next
+      q = 1
+      'Average the after-heat-pulse temperatures for each thermocouple separately for the heat ratio method.
+      For q = 1 To Number_of_Thermocouples
+        AvgSpa (After_Heat_Pulse_Temperature(q), End_of_After_Heat_Pulse_Temperature - Start_of_After_Heat_Pulse_Temperature, After_Heat_Pulse_Temperature_Array_1(-1, q))
+      Next
+      q = 1
+      p = 1
+      'Subset the raw data to create an array with only after-heat-pulse temperatures for the entire time after the heat pulse for the maximum heat ratio method.
+      For q = 1 To Number_of_Thermocouples
+        For p = 1 To Measurement_Time_After_Heat_Pulse
+          After_Heat_Pulse_Temperature_Array_2(p, q) = Complete_Array(Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + p, q)
+        Next
+      Next
+      q = 1
+      p = 1
+      'Calculate all moving averages of after-heat-pulse temperatures for the maximum heat ratio method.
+      For q = 1 To Number_of_Thermocouples
+        For p = 1 To Measurement_Time_After_Heat_Pulse - Moving_Average_Window + 1
+          AvgSpa (Moving_Average_Array(p, q), Moving_Average_Window, After_Heat_Pulse_Temperature_Array_2(-((Moving_Average_Window / 2) - 0.5 + p), q))
+        Next
+      Next
+      q = 1
+      'Determine which maximum after-heat-pulse temperatures to store in the maximum heat ratio method data table.
+      If Use_Moving_Averages = True Then
+        For q = 1 To Number_of_Thermocouples
+          MaxRun (Maximum_After_Heat_Pulse_Temperature(q), 1, Moving_Average_Array(-1, q), Measurement_Time_After_Heat_Pulse + 1 - Moving_Average_Window)
+        Next
+        q = 1
+      ElseIf Use_Moving_Averages = False Then
+        For q = 1 To Number_of_Thermocouples
+          MaxRun (Maximum_After_Heat_Pulse_Temperature(q), 1, After_Heat_Pulse_Temperature_Array_2(-1, q), Measurement_Time_After_Heat_Pulse)
+        Next
+        q = 1
+      EndIf
+      'Store the data in the data tables.
+      CallTable Heat_Ratio
+      CallTable Maximum_Heat_Ratio
+      CallTable Raw_Data_1
+      CallTable Raw_Data_2
+    EndIf
+  NextScan
+EndProg
