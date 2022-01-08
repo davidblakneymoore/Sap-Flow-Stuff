@@ -241,7 +241,7 @@ BeginProg
           Measurement_Times(i) = Status.Timestamp
           'Record sap flow measurements (temperatures).
           For j = 1 To Number_of_Thermocouples
-            PulsePort (1, 10)
+            PulsePort (2, 10)
             If Differential_Measurements = True AND Single_Ended_Measurements = False
               TCDiff (Complete_Array(i, j), 1, mV2_5C, 1, TypeT, Panel_Temperature, 0, 0, _60Hz, 1, 0)
             EndIf
@@ -263,6 +263,7 @@ BeginProg
         EndIf
         i += 1
       Loop
+      PortSet (1, 0)
       q = 1
       p = 1
       'Subset the raw data to create an array with only before-heat-pulse temperatures; this step is for both the heat ratio method and the maximum heat ratio method.
