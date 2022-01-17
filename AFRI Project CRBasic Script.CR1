@@ -208,7 +208,7 @@ SequentialMode
 
 ' Station Name:
 
-StationName Station_1
+StationName AFRI_Station_1
 
 ' Constants That May Change:
 
