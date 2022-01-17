@@ -1,0 +1,416 @@
+' ACER Project Script
+
+' David Moore
+' University of New Hampshire Ecohydrology Lab
+' davidblakneymoore@gmail.com
+' January 2022
+
+
+' The Explanation
+
+' This script is for reading heat-pulse sap flow sensors
+' following the heat ratio method (Burgess et al., 2001) and
+' the maximum heat ratio method (J. Gutierrez Lopez,
+' unpublished) that have been built in-house. These sap flow
+' sensors are read in differential mode - each measurement
+' probe contains one thermocouple. This script will also
+' measure sap pressure using Omega Wet/Wet Differential Board
+' Mounted Pressure Sensors (PX26-100GV) or Honeywell Board
+' Mount Pressure Sensors 0-100Psi Diff. 4-Pin (26PCFFA6D) and
+' sap yield using Interface SSM or SSM2 Sealed S-Type Load
+' Cells (SSM-AJ-50).
+
+' This script requires one Campbell Scientific Measurement
+' and Control Datalogger (CR1000) and two Campbell Scientific
+' 16- or 32-Channel Relay Multiplexers (AM16/32B).
+
+' The first multiplexer will be used to measure sap flow. The
+' second multiplexer will be used to measure sap pressure and
+' sap yield; the pressure sensors must be connected to the
+' first ports on this multiplexer, followed by the load
+' cells.
+
+' The first multiplexer that measures sap flow must be wired
+' as follows (multiplexer port --> datalogger port):
+' RES --> C1
+' CLK --> C2
+' G --> G
+' 12V --> 12V
+' COM ODD H --> DIFF 1 H
+' COM ODD L --> DIFF 1 L
+' This multiplexer must be in 2X32 mode to read sensors in
+' differential mode.
+
+' The second multiplexer that measures sap pressure and sap
+' yield must be wired as follows (multiplexer port -->
+' datalogger port):
+' RES --> C3
+' CLK --> C4
+' G --> G
+' 12V --> 12V
+' COM ODD H --> DIFF 2 H
+' COM ODD L --> DIFF 2 L
+' This multiplexer must be in 2X32 mode to read sensors in
+' differential mode.
+
+' This method uses three probes (an upper probe, a middle
+' probe, and a lower probe). For sensors read in single-ended
+' mode, the upper and lower probes each have three copper-
+' constantan (Type T) thermocouples. For each of these two
+' probes, there is one constantan wire and there are three
+' copper wires. The three copper wires are soldered to the
+' constantan wire at different positions (typically either
+' 0.5, 1.75, and 3.0 cm or 0.5, 1.0, and 1.5 cm from the body
+' of the probe) to allow sap flow to be estimated at three
+' different depths (an outer depth, a middle depth, and an
+' inner depth). For sensors read in differential mode, the
+' upper and lower probes each contain one copper-constantan
+' (Type T) thermocouple set at whichever depth is desired.
+' These differential-mode sensors contain only one constantan
+' and one copper wire in both the upper and lower probes. The
+' middle probe is a heater which consists of a three-loop
+' coil of nichrome wire which spans the position(s) of the
+' thermocouple(s).
+
+' Multiplexer Wiring and Use Instructions:
+
+' For Sensors Read in Single-Ended Mode:
+
+' Make sure the multiplexer is in single-ended ('4X16') mode.
+' The 'RES' port on the multiplexer is wired to the 'COM1 Tx'
+' port on the datalogger. The 'CLK' port on the multiplexer
+' is wired to the 'COM1 Rx' port on the datalogger. The 'G'
+' port on the multiplexer is wired to the 'Power Out G' port
+'  on the datalogger. The '12V' port on the multiplexer is
+'  wired to the 'Power Out 12V' port on the datalogger. The
+' 'COM ODD H' port on the multiplexer is wired to the 'SE 1'
+' port on the datalogger. The 'COM ODD L' port on the
+' multiplexer is wired to the 'SE 2' port on the datalogger.
+' The 'COM' ground port on the multiplexer is wired to a
+' ground port on the datalogger. The 'COM EVEN H' port on the
+' multiplexer is wired to the 'SE 3' port on the datalogger.
+' The 'COM EVEN L' port on the multiplexer is wired to the
+' 'SE 4' port on the datalogger.
+
+' For Sensors Read in Differential Mode:
+
+' Make sure the multiplexer is in differential ('2X32') mode.
+' The 'RES' port on the multiplexer is wired to the 'C1' port
+' on the datalogger. The 'CLK' port on the multiplexer is
+' wired to the 'C2' port on the datalogger. The 'G' port on
+' the multiplexer is wired to the 'Power Out G' port on the
+' datalogger. The '12V' port on the multiplexer is wired to
+' the 'Power Out 12V' port on the datalogger. The 'COM ODD H'
+' port on the multiplexer is wired to the 'DIFF 1 H' port on
+' the datalogger. The 'COM ODD L' port on the multiplexer is
+' wired to the 'DIFF 1 L' port on the datalogger. The 'COM'
+' ground port on the multiplexer is wired to a ground port on
+' the datalogger. The 'COM EVEN H' port on the multiplexer is
+' wired to the 'DIFF 2 H' port on the datalogger. The 'COM
+' EVEN L' port on the multiplexer is wired to the 'DIFF 2 L'
+' port on the datalogger.
+
+' Note that the multiplexer-to-datalogger wiring does not
+' change when switching between single-ended and differential
+' modes; only the names of the ports on the datalogger and
+' the multiplexer change (single-ended-mode port names are in
+' blue and differential-mode port names are in white).
+
+' Heater Wiring Instructions:
+
+' Heaters should be wired to the 'SW12V' port.
+
+' Thermocouple Wiring Instructions:
+
+' For Sensors Read in Single-Ended Mode:
+
+' Copper wires should be wired to the 'H' and the 'L' ports
+' on the multiplexer. In our lab, we have standardized the
+' order of these wires so that the outer copper wire on the
+' upper probe (which has green housing) is first, followed by
+' the middle copper wire on the upper probe (which has white
+' housing), the inner copper wire on the upper probe (which
+' has red housing), the outer copper wire on the lower probe
+' (which has blue housing), the middle copper wire on the
+' lower probe (which has brown housing), and the inner copper
+' wire on the lower probe (which has black housing). All the
+' constantan wires are connected to the ground ports on the
+' multiplexer. Group wires by sensor on the multiplexer.
+
+' For Sensors Read in Differential Mode:
+
+' Copper wires should be wired to the 'H' ports on the
+' multiplexer and constantan wires should be wired to the 'L'
+' ports on the multiplexer. Wires from the same thermocouple
+' should be connected to the same number port on the
+' multiplexer.
+
+' Soil Temperature Sensor (Type E Thermocouple Burial Probe
+' (105E-L)) Wiring Instructions (this sensor is not
+' required):
+
+' Wire the purple wire to port '1H' on the datalogger; wire
+' the pink wire to port '1L' on the datalogger; wire the
+' clear wire to the ground symbol next to either port '1H' or
+' port '1L' on the datalogger.
+
+' If you do not need to collect raw data, please comment out
+' the following lines of code so that you can save memory on
+' the datalogger: 142, 176-188, 218, and 301-302.
+
+' Thank you to my sap flow mentor, Jose Gutierrez Lopez, and
+' to the Campbell Scientific technicians who taught me how to
+' program CR1000 dataloggers.
+
+'ACER NOTES
+'Multiplexer containing DIFF sap flow sensors: RES --> C1, CLK --> C2, COM ODD H --> DIFF 1 H, COM ODD L --> DIFF 1 L
+'Multiplexer containing DIFF pressure sensors and DIFF load cells: RES --> C3, CLK --> C4, COM ODD H --> DIFF 2 H, COM ODD L --> DIFF 2 L
+
+' The Program
+
+SequentialMode
+
+' Station Name:
+
+StationName Station_1
+
+' Constants That May Change:
+
+Const Any_Sap_Flow_Sensors_Present = True ' This constant specifies whether or not any sap flow sensors are connected.
+Const Number_of_Sap_Flow_Sensors = 32 ' This constant specifies how many sap flow sensors are connected to the multiplexer. It cannot be greater than 32.
+Const Any_Sap_Pressure_Sensors_Present = True ' This constant specifies whether or not any sap pressure sensors are connected.
+Const Number_of_Sap_Pressure_Sensors = 16 ' This constant specifies how many sap pressure sensors are connected. The sum of the number of sap pressure sensors and the number of load cells cannot be greater than 32.
+Const Any_Load_Cells_Present = True ' This constant specifies whether or not any load cells are connected.
+Const Number_of_Load_Cells = 16 ' This constant specifies how many load cells are connected. The sum of the number of sap pressure sensors and the number of load cells cannot be greater than 32.
+Const Time_of_Measurement_Cycle = 15 ' This constant sets the time (in min) between measurement cycles. This constant must be a multiple of the next constant ('Time_Between_Measurements').
+Const Time_Between_Measurements = 3 ' This constant specifies the time (in min) between measurements other than sap flow measurements. Ultimately, these measurement values are averaged before they are reported.
+Const Use_Moving_Averages = True ' This constant determines whether or not moving averages are used in the maximum heat ratio method for generating the after-heat-pulse temperatures. If this is 'False', the maximum raw data point is used instead of the maximum moving average.
+Const Measurement_Time_Before_Heat_Pulse = 20 ' This constant specifies the amount of time (in s) immediately prior to the heat pulse being emitted that temperature measurements are recorded for the 'Before_Heat_Pulse_Temperature' columns in the data tables.
+Const Heat_Pulse_Time = 3 ' This constant specifies the amount of time (in s) that the heater is on for during each measurement cycle.
+Const Measurement_Time_After_Heat_Pulse = 120 ' This constant specifies the amount of time (in s) that measurements are made when the heat pulse ends during each measurement cycle.
+Const Start_of_After_Heat_Pulse_Temperature = 60 ' This constant specifies the time (in s) after the heat pulse ends when after-heat-pulse temperature measurements begin.
+Const End_of_After_Heat_Pulse_Temperature = 100 ' This constant specifies the time (in s) after the heat pulse ends when after-heat-pulse temperature measurements end.
+Const Moving_Average_Window = 5 ' This constant specifies how many values are used when computing moving averages for the maximum heat ratio method. It must be a positive, odd integer or else the moving average window won't be centered on the correct point.
+Const Collect_Raw_Data = False ' This constant specifies whether or not raw data will be stored. Storing raw data uses up a significant amount of memory on the datalogger.
+
+' Other Constants:
+
+Const Number_of_Thermocouples = Number_of_Sap_Flow_Sensors
+
+' Public Variables:
+
+Public Sap_Flow_Measurements(Number_of_Thermocouples) : Units Sap_Flow_Measurements() = ° C ' This vector of temperatures (in ° C) contains the raw temperature measurements that are read each second.
+Public Battery_Voltage : Units Battery_Voltage = V ' This variable measures the voltage (in V) of the 12-V battery that powers the heaters.
+Public Panel_Temperature : Units Panel_Temperature = ° C ' This variable measures the temperature (in ° C) of the panel.
+Public Sap_Pressure(Number_of_Sap_Pressure_Sensors) : Units Sap_Pressure() = mV * (V ^ (-1)) ' This variable measures pressure if any Omega PX26-100GV pressure sensors are connected.
+Public Sap_Yield(Number_of_Load_Cells) : Units Sap_Yield() = mV / V ' This variable measures mass if any Interface SSM-AJ-50 load cells are connected.
+Public Wood_Temperature(Number_of_Thermocouples) : Units Wood_Temperature() = ° C ' This vector of temperatures (in ° C) is for both the heat ratio and the maximum heat ratio methods.
+Public After_Heat_Pulse_Temperature(Number_of_Thermocouples) : Units After_Heat_Pulse_Temperature() = ° C ' This vector of temperatures (in ° C) is for the heat ratio method.
+Public Maximum_After_Heat_Pulse_Temperature(Number_of_Thermocouples) : Units Maximum_After_Heat_Pulse_Temperature() = ° C ' This vector of temperatures (in ° C) is for the maximum heat ratio method.
+Public Sap_Flow_Measurement_Time : Units Sap_Flow_Measurement_Time = s ' This vector records the times that measurements (temperatures) are recorded by the datalogger.
+
+' Private Variables:
+
+Dim Is_Sap_Flow_Being_Measured As Boolean ' This variable keeps track of whether or not sap flow measurements are actively being recorded.
+Dim Is_the_Heater_On As Boolean ' This variable keeps track of whether or not the heaters are on.
+Dim i ' This variable indexes vectors and it also indexes rows of matrices.
+Dim j ' This variable indexes vectors and it also indexes columns of matrices.
+Dim Time : Units Time = s ' This variable counts time (in s), starting with the time measurements commence before the heat pulse.
+Dim Complete_Array(Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Measurement_Time_After_Heat_Pulse, Number_of_Thermocouples) : Units Complete_Array() = ° C ' This array stores all of the raw measurements (in ° C).
+Dim Wood_Temperature_Array(Measurement_Time_Before_Heat_Pulse, Number_of_Thermocouples) : Units Wood_Temperature_Array() = ° C ' This array of temperatures (in ° C) is for both the heat ratio and the maximum heat ratio methods.
+Dim After_Heat_Pulse_Temperature_Array_1(End_of_After_Heat_Pulse_Temperature - Start_of_After_Heat_Pulse_Temperature, Number_of_Thermocouples) : Units After_Heat_Pulse_Temperature_Array_1() = ° C ' This array of temperatures (in ° C) is for the heat ratio method.
+Dim After_Heat_Pulse_Temperature_Array_2(End_of_After_Heat_Pulse_Temperature - Start_of_After_Heat_Pulse_Temperature, Number_of_Thermocouples) : Units After_Heat_Pulse_Temperature_Array_2() = ° C ' This array of temperatures (in ° C) is for the maximum heat ratio method.
+Dim Moving_Average_Array(Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Measurement_Time_After_Heat_Pulse + 1 - Moving_Average_Window, Number_of_Thermocouples) : Units Moving_Average_Array() = ° C ' This array of temperature moving averages (in ° C) is for the maximum heat ratio method.
+
+' Data Tables:
+
+DataTable (Heat_Ratio, True, -1)
+  DataInterval (0, Time_of_Measurement_Cycle, Min, 0)
+  Sample (1, Panel_Temperature, FP2)
+  Minimum (1, Battery_Voltage, FP2, False, False)
+  #If (Any_Sap_Flow_Sensors_Present) Then
+    Sample (Number_of_Thermocouples, Wood_Temperature(), FP2)
+    Sample (Number_of_Thermocouples, After_Heat_Pulse_Temperature(), FP2)
+  #EndIf
+  #If (Any_Sap_Pressure_Sensors_Present) Then
+    Average (Number_of_Sap_Pressure_Sensors, Sap_Pressure(), FP2, False)
+  #EndIf
+  #If (Any_Load_Cells_Present) Then
+    Average (Number_of_Load_Cells, Sap_Yield(), FP2, False)
+  #EndIf
+EndTable
+DataTable (Maximum_Heat_Ratio, True, -1)
+  DataInterval (0, Time_of_Measurement_Cycle, Min, 0)
+  Sample (1, Panel_Temperature, FP2)
+  Minimum (1, Battery_Voltage, FP2, False, False)
+  #If (Any_Sap_Flow_Sensors_Present) Then
+    Sample (Number_of_Thermocouples, Wood_Temperature(), FP2)
+    Sample (Number_of_Thermocouples, Maximum_After_Heat_Pulse_Temperature(), FP2)
+  #EndIf
+  #If (Any_Sap_Pressure_Sensors_Present) Then
+    Average (Number_of_Sap_Pressure_Sensors, Sap_Pressure(), FP2, False)
+  #EndIf
+  #If (Any_Load_Cells_Present) Then
+    Average (Number_of_Load_Cells, Sap_Yield(), FP2, False)
+  #EndIf
+EndTable
+DataTable (Raw_Data_1, Collect_Raw_Data AND Is_Sap_Flow_Being_Measured, -1)
+  DataInterval (0, 1, Sec, 0)
+  #If (Any_Sap_Flow_Sensors_Present) Then
+    Sample (1, Sap_Flow_Measurement_Time, String)
+    Sample (Number_of_Thermocouples, Complete_Array(), FP2)
+  #EndIf
+EndTable
+DataTable (Raw_Data_2, Collect_Raw_Data, -1)
+  DataInterval (0, Time_of_Measurement_Cycle, Min, 0)
+  Sample (1, Panel_Temperature, FP2)
+  Minimum (1, Battery_Voltage, FP2, False, False)
+  #If (Any_Sap_Pressure_Sensors_Present) Then
+    Average (Number_of_Sap_Pressure_Sensors, Sap_Pressure(), FP2, False)
+  #EndIf
+  #If (Any_Load_Cells_Present) Then
+    Average (Number_of_Load_Cells, Sap_Yield(), FP2, False)
+  #EndIf
+EndTable
+
+' The Main Program:
+
+BeginProg
+  Scan (1, Sec, 0, 0)
+    If (TimeIsBetween (0, Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Measurement_Time_After_Heat_Pulse + 1, Time_of_Measurement_Cycle * 60, Sec)) Then
+      ' Measure sap flow if any sap flow sensors are connected.
+      If (Any_Sap_Flow_Sensors_Present) Then
+        MuxSelect (2, 1, 5, 1, 1)
+        Delay (0, 100, mSec)
+        Time = Timer (1, sec, 4)
+        i = 1
+        Is_Sap_Flow_Being_Measured = True
+        Do
+          If (Time > Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Measurement_Time_After_Heat_Pulse)
+            Is_Sap_Flow_Being_Measured = False
+            Exit Do
+          EndIf
+          If (IfTime (0, 1, sec)) Then
+            ' Record the time.
+            Sap_Flow_Measurement_Time = Status.Timestamp
+            ' Record sap flow measurements.
+            j = 1
+            SubScan (0, uSec, Number_of_Sap_Flow_Sensors)
+              TCDiff (Sap_Flow_Measurements(j), 1, mV2_5C, 1, TypeT, Panel_Temperature, 0, 0, _60Hz, 1, 0)
+              PulsePort (2, 10)
+              j += 1
+            NextSubScan
+            For j = 1 To Number_of_Thermocouples
+              Complete_Array(i, j) = Sap_Flow_Measurements(j)
+            Next
+          EndIf
+          CallTable Raw_Data_1
+          ' Turn the heater on at the right time.
+          If ((NOT (Is_the_Heater_On)) AND (Time > Measurement_Time_Before_Heat_Pulse) AND (Time < Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time)) Then
+            SW12 (1)
+            Is_the_Heater_On = True
+          EndIf
+          ' Turn the heater off at the right time.
+          If ((Is_the_Heater_On) AND (Time > Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time)) Then
+            SW12 (0)
+            Is_the_Heater_On = False
+          EndIf
+          i += 1
+        Loop
+        PortSet (1, 0)
+      EndIf
+    EndIf
+  NextScan
+  SlowSequence
+  Scan (1, Sec, 0, 0)
+    If (TimeIntoInterval (0, Time_Between_Measurements, Min)) Then
+      ' Measure battery voltage.
+      Battery (Battery_Voltage)
+      ' Measure the panel temperature.
+      PanelTemp (Panel_Temperature, _60Hz)
+      If (Any_Sap_Pressure_Sensors_Present OR Any_Load_Cells_Present) Then
+        SW12 (1)
+        ' Measure sap pressure if any sap pressure sensors are connected.
+        If (Any_Sap_Pressure_Sensors_Present) Then
+          MuxSelect (4, 3, 5, 1, 1)
+          Delay (0, 100, mSec)
+          i = 1
+          SubScan (0, uSec, Number_of_Sap_Pressure_Sensors)
+            VoltDiff (Sap_Pressure(i), 1, mV5000, 2, True, 0, 250, 1.0, 0)
+            PulsePort (4, 10)
+            i += 1
+          NextSubScan
+          PortSet (3, 0)
+        EndIf
+        ' Measure sap yield if any load cells are connected.
+        If (Any_Load_Cells_Present) Then
+          MuxSelect (4, 3, 5, Number_of_Sap_Pressure_Sensors + 1, 1)
+          Delay (0, 100, mSec)
+          i = 1
+          SubScan (0, uSec, Number_of_Load_Cells)
+            VoltDiff (Sap_Yield(i), 1, mV5000, 2, True, 0, 250, 1.0, 0)
+            PulsePort (1, 10)
+            i += 1
+          NextSubScan
+          PortSet (3, 0)
+        EndIf
+        SW12 (0)
+      EndIf
+      ' Process raw sap flow data if any sap flow sensors are connected.
+      If (Any_Sap_Flow_Sensors_Present) Then
+        ' Subset the raw data to create an array with only before-heat-pulse temperatures; this step is for both the heat ratio method and the maximum heat ratio method.
+        For j = 1 To Number_of_Thermocouples
+          For i = 1 To Measurement_Time_Before_Heat_Pulse
+            Wood_Temperature_Array(i, j) = Complete_Array(i, j)
+          Next
+        Next
+        ' Average the before-heat-pulse temperatures for each thermocouple separately; these values will appear in both the heat ratio method and the maximum heat ratio method data tables.
+        For i = 1 To Number_of_Thermocouples
+          AvgSpa (Wood_Temperature(i), Measurement_Time_Before_Heat_Pulse, Wood_Temperature_Array(-1, i))
+        Next
+        ' Subset the raw data to create an array with only after-heat-pulse temperatures for the time period of interest for the heat ratio method.
+        For j = 1 To Number_of_Thermocouples
+          For i = 1 To End_of_After_Heat_Pulse_Temperature - Start_of_After_Heat_Pulse_Temperature
+            After_Heat_Pulse_Temperature_Array_1(i, j) = Complete_Array(Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + Start_of_After_Heat_Pulse_Temperature - 1 + i, j)
+          Next
+        Next
+        ' Average the after-heat-pulse temperatures for each thermocouple separately for the heat ratio method.
+        For i = 1 To Number_of_Thermocouples
+          AvgSpa (After_Heat_Pulse_Temperature(i), End_of_After_Heat_Pulse_Temperature - Start_of_After_Heat_Pulse_Temperature, After_Heat_Pulse_Temperature_Array_1(-1, i))
+        Next
+        ' Subset the raw data to create an array with only after-heat-pulse temperatures for the entire time after the heat pulse for the maximum heat ratio method.
+        For j = 1 To Number_of_Thermocouples
+          For i = 1 To Measurement_Time_After_Heat_Pulse
+            After_Heat_Pulse_Temperature_Array_2(i, j) = Complete_Array(Measurement_Time_Before_Heat_Pulse + Heat_Pulse_Time + i, j)
+          Next
+        Next
+        ' Calculate all moving averages of after-heat-pulse temperatures for the maximum heat ratio method.
+        For j = 1 To Number_of_Thermocouples
+          For i = 1 To Measurement_Time_After_Heat_Pulse - Moving_Average_Window + 1
+            AvgSpa (Moving_Average_Array(i, j), Moving_Average_Window, After_Heat_Pulse_Temperature_Array_2(-((Moving_Average_Window / 2) - 0.5 + i), j))
+          Next
+        Next
+        ' Determine which maximum after-heat-pulse temperatures to store in the maximum heat ratio method data table.
+        If (Use_Moving_Averages) Then
+          For i = 1 To Number_of_Thermocouples
+            MaxRun (Maximum_After_Heat_Pulse_Temperature(i), 1, Moving_Average_Array(-1, i), Measurement_Time_After_Heat_Pulse + 1 - Moving_Average_Window)
+          Next
+        ElseIf (NOT (Use_Moving_Averages)) Then
+          For i = 1 To Number_of_Thermocouples
+            MaxRun (Maximum_After_Heat_Pulse_Temperature(i), 1, After_Heat_Pulse_Temperature_Array_2(-1, i), Measurement_Time_After_Heat_Pulse)
+          Next
+        EndIf
+      EndIf
+    EndIf
+    CallTable Heat_Ratio
+    CallTable Maximum_Heat_Ratio
+    CallTable Raw_Data_2
+  NextScan
+EndProg
+
+' Works Cited
+
+' Burgess, S.S.O., M.A. Adams, N.C. Turner, C.R. Beverly,
+' C.K. Ong, A.A.H. Khan, and T.M. Bleby. 2001. An improved
+' heat pulse method to measure low and reverse rates of sap
+' flow in woody plants. Tree Physiol. 21:589-598.
