@@ -1,0 +1,548 @@
+' Diversifying the Maple Syrup Industry to Enhance
+' Socioecological Resilience and Ecosystem Services
+
+' CRBasic Script
+
+' David Moore
+' University of New Hampshire Ecohydrology Lab
+' davidblakneymoore@gmail.com
+' January 2022
+
+
+' Materials Needed:
+
+' One Campbell Scientific Measurement and Control Datalogger
+' (CR1000)
+
+' Three Campbell Scientific 16- or 32-Channel Relay
+' Multiplexers (AM16/32B)
+
+' One Kyotto Relay Solid State 32 Volt DC Input 4 Amp 60 Volt
+' DC Output 4-Pin relay
+
+' Two Adjustable LM2596S DC-DC Buck Converter Reduced Voltage
+' Regulator Power Module 36V 24V 12V to 5V 2A Voltage
+' Stabilizer with Digital Voltmeter Display buck converters
+
+' Heat-pulse sap flow sensors following the heat ratio method
+' (Burgess et al., 2001) and the maximum heat ratio method
+' (J. Gutierrez Lopez, unpublished) built in-house
+
+' Natkon Point Dendrometers (ZN12-T-2WP) for measuring fine-
+' scale diameter fluctuations
+
+' Teros Meter 10 Simple Soil Water Content Sensors for
+' measuring wood water content
+
+' Omega Wet/Wet Differential Board Mounted Pressure Sensors
+' (PX26-100GV) or Honeywell Board Mount Pressure Sensors 0-
+' 100Psi Diff. 4-Pin (26PCFFA6D) (these two sensors are
+' exactly the same) for measuring sap pressure
+
+' Campbell Scientific Type E Thermocouple Burial Probes
+' (105E-L) for measuring soil temperature
+
+
+' Wiring Instructions and Comments:
+
+' This script is for reading heat-pulse sap flow sensors
+' following the heat ratio method (Burgess et al., 2001) and
+' the maximum heat ratio method (J. Gutierrez Lopez,
+' unpublished) that have been built in-house. These sap flow
+' sensors are read in single-ended mode - each measurement
+' probe contains more than one thermocouple that share a
+' common ground (constantan wire). This script will also
+' measure fine-scale diameter fluctuations using Natkon Point
+' Dendrometers (ZN12-T-2WP), wood water content using Teros
+' Meter 10 Simple Soil Water Content Sensors, sap pressure
+' using Omega Wet/Wet Differential Board Mounted Pressure
+' Sensors (PX26-100GV) or Honeywell Board Mount Pressure
+' Sensors 0-100Psi Diff. 4-Pin (26PCFFA6D), and soil
+' temperature using Campbell Scientific Type E Thermocouple
+' Burial Probes (105E-L).
+
+' This script requires one Campbell Scientific Measurement
+' and Control Datalogger (CR1000) and three Campbell
+' Scientific 16- or 32-Channel Relay Multiplexers (AM16/32B).
+
+' The first multiplexer will be used to measure sap flow and
+' wood temperature; complete sap flow sensors (which also
+' measure wood temperature) must be connected to the first
+' ports on the multiplexer, followed by the wood temperature
+' sensors. The second multiplexer will be used to measure
+' fine-scale diameter fluctuations and wood water content;
+' the point dendrometers must be connected to the first ports
+' on this multiplexer, followed by the soil water content
+' sensors. The third multiplexer will be used to measure sap
+' pressure and soil temperature; the pressure sensors must be
+' connected to the first ports on this multiplexer, followed
+' by the soil temperature sensors.
+
+' The first multiplexer that measures sap flow and wood
+' temperature must be wired as follows (multiplexer port -->
+' datalogger port):
+' RES --> C1
+' CLK --> C2
+' G --> G
+' 12V --> 12V
+' COM ODD H --> SE 1
+' COM ODD L --> SE 2
+' COM ground --> SE ground
+' COM EVEN H --> SE 3
+' COM EVEN L --> SE 4
+' This multiplexer must be in '4X16' mode to read sensors in
+' single-ended mode.
+
+' The second multiplexer that measures fine-scale diameter
+' fluctuations and wood water content must be wired as
+' follows (multiplexer port --> datalogger port):
+' RES --> C3
+' CLK --> C4
+' G --> G
+' 12V --> 12V
+' COM ODD H --> SE 5
+' COM ODD L --> SE 6
+' COM ground --> SE ground
+' COM EVEN H --> SE 7
+' COM EVEN L --> SE 8
+' This multiplexer must be in '4X16' mode to read sensors in
+' single-ended mode.
+
+' The third multiplexer that measures sap pressure and soil
+' temperature must be wired as follows (multiplexer port -->
+' datalogger port):
+' RES --> C5
+' CLK --> C6
+' G --> G
+' 12V --> 12V
+' COM ODD H --> DIFF 5 H
+' COM ODD L --> DIFF 5 L
+' This multiplexer must be in '2X32' mode to read sensors in
+' differential mode.
+
+' Use an Adjustable LM2596S DC-DC Buck Converter Reduced
+' Voltage Regulator Power Module 36V 24V 12V to 5V 2A Voltage
+' Stabilizer with Digital Voltmeter Display buck converter to
+' reduce the voltage from the datlogger's '5V' port to 4.8 V.
+' This buck converter will provide power to the point
+' dendrometers. Run one wire from the '5V' port on the
+' datalogger to the 'IN+' port on this buck converter. Run
+' another wire from a 'G' port on the datalogger to the 'IN-'
+' port on this buck converter. The red wires from the point
+' dendrometers must be connected To the 'OUT+' port on this
+' buck converter, and the black wires from the point
+' dendrometers may be connected to the 'OUT-' port on this
+' buck converter.
+
+' Use the datalogger's 'SW12' port to excite the sap pressure
+' sensors and the wood water content sensors. Use the same
+' Adjustable LM2596S DC-DC Buck Converter Reduced Voltage
+' Regulator Power Module 36V 24V 12V to 5V 2A Voltage
+' Stabilizer with Digital Voltmeter Display buck converter to
+' reduce the voltage from the 'SW12' port on the datalogger
+' to 10.0 V for both of these sensors. Run one wire from the
+' 'SW12' port on the datalogger to the 'IN+' port on this
+' buck converter. Run another wire from a 'G' port on the
+' datalogger to the 'IN-' port on this buck converter. The
+' red wires from the sap pressure sensors and the brown wires
+' from the wood water content sensors must be connected to
+' the 'OUT+' port on this buck converter, and the black wires
+' from the sap pressure sensors and the bare wires from the
+' wood water content sensors may be connected to the 'OUT-'
+' port on this buck converter.
+
+' Sap flow sensor heaters are powered by one of the
+' datalogger's '12V' ports, but a custom relay circuit that
+' uses a Kyotto Relay Solid State 32 Volt DC Input 4 Amp 60
+' Volt DC Output 4-Pin relay is used to turn the heaters on
+' and off using the datalogger's 'C7' port. Run a wire from
+' the '+2' terminal on the relay to the datalogger's 'C7'
+' port. Run another wire from the '1-' terminal on the relay
+' to one of the datalogger's 'G' ports. Run another wire from
+' the '+4' terminal of the relay to one of the datalogger's
+' '12V' ports. The '3-' terminal of the relay must be
+' connected to each of the sap flow heaters. The other end of
+' each sap flow heater must be connected to one of the
+' datalogger's 'G' ports. This connection occurs through the
+' custom relay circuit. Following these wiring instructions,
+' and using the custom relay circuit, sap flow heaters should
+' be connected in parallel - if one of them breaks, the
+' others will still function properly, and they will all
+' receive approximately 12 V from the battery (although the
+' actual amount of voltage they will receive will be slightly
+' lower than the battery voltage due to a voltage drop across
+' the solid-state relay). The datalogger's 'C1' through 'C8'
+' ports, which can each supply 5 V, are better options than
+' the datalogger's 'Vx1' port for turning on and off this
+' relay due to the input voltage range (3 V to 32 V). The
+' 'Vx1' port can only supply up to 2.5 V. These custom relay
+' circuits were built in-house. Please contact David for
+' details on how to build these relay circuits.
+
+' The sap flow sensors used in this project are read in
+' single-ended mode. They are comprised of three probes (an
+' upper probe which contains thermocouples, a middle probe
+' which contains a heater, and a lower probe which contains
+' thermocouples). Each upper and lower sap flow probe has
+' three copper-constantan (Type T) thermocouples. For each of
+' these two probes, there is one constantan wire and there
+' are three copper wires. The three copper wires are soldered
+' to the constantan wire at different positions (0.50, 1.75,
+' and 3.00 cm from the body of the probe) to allow sap flow
+' to be estimated at three different depths (an outer depth,
+' a middle depth, and an inner depth). Single-ended
+' thermocouples are nowhere near as precise as differential
+' thermocouples, so although relative differences in sap flow
+' across different sapwood depths may be reliable, sap flow
+' data will not be totally accurate. Furthermore, the
+' constantan wires from the upper and lower probes within
+' each sap flow sensor are connected before the wires are
+' connected to the multiplexer, and the constantan wires from
+' all the sap flow sensors on one multiplexer are connected
+' to the same ground, so the sap flow signal will be somewhat
+' muted across sensors connected to the same multuiplexer.
+' The shared ground on the multiplexer is what is used as a
+' reference when measuring voltage for each single-ended
+' thermocouple's copper wire. The middle probe is a heater
+' which consists of a three-loop coil of 36-AWG nichrome wire
+' which spans the positions of the three thermocouples in the
+' upper and lower probes.
+
+' All sap flow sensor constantan wires are connected to the
+' ground ports on the multiplexer. These ground ports are
+' denoted by an upside-down triangle. Copper wires are
+' connected the the single-ended ports of the multiplexer.
+' These ports are labeled 'H' and 'L'. The outer copper wire
+' from the upper sensor is connected first, followed by the
+' middle copper wire from the upper sensor, the inner copper
+' wire from the upper sensor, the outer copper wire from the
+' lower sensor, the middle copper wire from the lower sensor,
+' and the inner copper wire from the lower sensor. The six
+' copper wires from one sensor are connected to consecutive
+' ports on the multiplexer; when multiple sap flow sensors
+' are connected to one multiplexer, this sequence is
+' repeated. The Ecohydrology Lab has standardized the
+' insulation colors of these 6 copper wires - the copper wire
+' from the upper probe's outer thermocouple is green, the
+' copper wire from the upper probe's middle thermocouple is
+' white, the copper wire from the upper probe's inner
+' thermocouple is red, the copper wire from the lower probe's
+' outer thermocouple is blue, the copper wire from the lower
+' probe's middle thermocouple is brown, and the copper wire
+' from the lower probe's inner thermocouple is black.
+
+' For the multiplexer recording fine-scale diameter
+' fluctuations and wood water content, connect all the point
+' dendrometers first and then connect all the wood water
+' content sensors. Since this multiplexer is in '4X16' mode,
+' it will read measurements in groups of 4 ports. Thus, when
+' the multiplexer stops measuring fine-scale diameter
+' fluctuations and starts measuring wood water content, it
+' will need to switch to a new block of 4 ports. Accordingly,
+' no one bank of 4 multiplexer ports should contain more than
+' one type of sensor. The first wood water content sensor
+' should be connected to the first port in a bank of 4
+' multiplexer ports. Connect the white wires from the point
+' dendrometers to the single-ended ports on the multiplexer.
+' Connect the red wires from the point dendrometers to the
+' 'OUT+' port on the buck converter that's connected to the
+' '5V' port on the datalogger. Connect the black wires from
+' the point dendrometers to the 'OUT-' port on the buck
+' converter that is connected to the '5V' port on the
+' datalogger or to the ground ports on the multiplexer.
+' Connect the orange wires from the wood water content
+' sensors to the single-ended ports on the multiplexer.
+' Connect the brown wires from the wood water content sensors
+' to the 'OUT+' port on the buck converter that's connected
+' to the 'SW12' port on the datalogger. Connect the bare
+' wires from the wood water content sensors to the 'OUT-'
+' port on the buck converter that's connected to the 'SW12'
+' port on the datalogger or to the ground ports on the
+' multiplexer.
+
+' For the multiplexer recording sap pressure and soil
+' temperature measurements, connect all the sap pressure
+' sensors first and then connect all the soil temperature
+' sensors. Connect the green wires from the sap pressure
+' sensors (which are connected to pin 2 of the sap pressure
+' sensors) to the 'H' ports on the multiplexer. Connect the
+' white wires from the sap pressure sensors (which are
+' connected to pin 4 of the sap pressure sensors) to the 'L'
+' ports on the multiplexer. Connect the red wires from the
+' sap pressure sensors (which are connected to pin 1 of the
+' sap pressure sensors) to the 'OUT+' port on the buck
+' converter that's connected to the 'SW12' port on the
+' datalogger. Connect the black wires from the sap pressure
+' sensors (which are connected to pin 3 of the sap pressure
+' sensors) to the 'OUT-' port on the buck converter that's
+' connected to the 'SW12' port on the datalogger or to the
+' ground ports on the multiplexer. Connect the purple wires
+' from the soil temperature sensors to the 'H' ports on the
+' multiplexer. Connect the pink wires from the soil
+' temperature sensors to the 'L' ports on the multiplexer.
+' Connect the clear wires from the soil temperature sensors
+' to the ground ports on the multiplexer.
+
+' This code collects sap flow data every 3 s. There are 7
+' measurements recorded immediately before the heat pulse,
+' there is a 3-s heat pulse, and then there are 40
+' measurements recorded immediately after the heat pulse. No
+' measurements are taken during the heat pulse, so there is
+' a 9-s gap between the end of the before-heat-pulse
+' measurements and the beginning of the after-heat-pulse
+' measurements. Wood temperatures are reported as the average
+' of the 7 before-heat-pulse temperature measurements. After-
+' heat-pulse temperatures for the heat-ratio method are
+' reported as the average of the 14 measurements that are
+' recorded starting at 60 s after the heat pulse and ending
+' at 99 s after the heat pulse. For the maximum-heat-ratio
+' method, maximum values are computed across the 40
+' measurements recorded for each sap flow thermocouple after
+' the heat pulse (starting at 3 s after the heat pulse and
+' ending at 120 s after the heat pulse).
+
+' Thank you to my sap flow mentor, Jose Gutierrez Lopez, and
+' to the Campbell Scientific technicians who taught me how to
+' program CR1000 dataloggers.
+
+
+' The Program
+
+SequentialMode
+
+' Station Name:
+
+StationName AFRI_Station_1
+
+' Constants That May Change:
+
+Const Any_Sap_Flow_Sensors_Present = True ' This constant specifies whether or not any sap flow sensors are connected.
+Const Number_of_Sap_Flow_TCs = 32 ' This constant specifies how many wood temperature sensor thermocouples are connected to the multiplexer. The sum of the 'Number_of_Sap_Flow_Thermocouples' and the 'Number_of_Wood_Temperature_Thermocouples' constants cannot be greater than 64.
+Const Number_of_Wood_Temperature_TCs = 32 ' This constant specifies how many sap flow sensor thermocouples are connected to the multiplexer. These thermocouples will also double as wood temperature sensors. The sum of the 'Number_of_Sap_Flow_Thermocouples' and the 'Number_of_Wood_Temperature_Thermocouples' constants cannot be greater than 64.
+Const Any_Point_Dendrometers_Present = True ' This constant specifies whether or not any point dendrometers are connected.
+Const Number_of_Point_Dendrometers = 32 ' This constant specifies how many point dendrometers are connected. The sum of the number of point dendrometers and the number of wood water content probes cannot be greater than 64.
+Const Any_Wood_Water_Content_Probes_Present = True ' This constant specifies whether or not any wood water content probes are connected.
+Const Number_of_Wood_Water_Content_Probes = 32 ' This constant specifies how many wood water content probes are connected. The sum of the number of point dendrometers and the number of wood water content probes cannot be greater than 64.
+Const Any_Sap_Pressure_Sensors_Present = True ' This constant specifies whether or not any sap pressure sensors are connected.
+Const Number_of_Sap_Pressure_Sensors = 16 ' This constant specifies how many sap pressure sensors are connected. The sum of the number of sap pressure sensors and the number of soil temperature sensors cannot be greater than 32.
+Const Any_Soil_Temperature_Probes_Present = True ' This constant specifies whether or not any soil temperature sensors are connected.
+Const Number_of_Soil_Temperature_Probes = 16 ' This constant specifies how many soil temperature sensors are connected. The sum of the number of sap pressure sensors and the number of soil temperature sensors cannot be greater than 32.
+Const Moving_Average_Window = 3 ' This constant specifies how many values are used when computing moving averages for the maximum-heat-ratio method. It must be a positive, odd integer or else the moving average window won't be centered on the correct point. It must also be less than 40, which is how many measurements are recorded after the heat pulse.
+
+' Public Variables:
+
+Public Battery_Voltage : Units Battery_Voltage = V ' This variable measures the voltage (in V) of the 12-V battery that powers the heaters.
+Public Panel_Temperature : Units Panel_Temperature = ° C ' This variable measures the temperature (in ° C) of the panel.
+Public Diameter(Number_of_Point_Dendrometers) : Units Diameter() = µm ' This variable measures fine-scale diameter fluctuations (in µm) if any point dendrometers are connected.
+Public Wood_Water_Content_Raw_Output(Number_of_Wood_Water_Content_Probes) : Units Wood_Water_Content_Raw_Output() = mV ' This variable measures raw wood water content probe output (in mV) if any wood water content probe is connected.
+Public Wood_Water_Content(Number_of_Wood_Water_Content_Probes) : Units Wood_Water_Content() = (m ^ 3) * (m ^ (-3)) ' This variable measures wood water content (in (m ^ 3) * (m ^ (-3))) if any wood water content probe is connected.
+Public Sap_Pressure(Number_of_Sap_Pressure_Sensors) : Units Sap_Pressure() = psi ' This variable measures pressure (in psi) if any sap pressure sensors are connected.
+Public Soil_Temperature(Number_of_Soil_Temperature_Probes) : Units Soil_Temperature() = ° C ' This variable measures the soil temperature (in ° C) if any soil temperature sensors are connected.
+Public Wood_Temperature(Number_of_Sap_Flow_TCs + Number_of_Wood_Temperature_TCs) : Units Wood_Temperature() = ° C ' This vector of temperatures (in ° C) is for both the heat ratio and the maximum heat ratio methods.
+Public After_Heat_Pulse_Temperature(Number_of_Sap_Flow_TCs) : Units After_Heat_Pulse_Temperature() = ° C ' This vector of temperatures (in ° C) is for the heat ratio method.
+Public Max_After_Heat_Pulse_Temperature(Number_of_Sap_Flow_TCs) : Units Max_After_Heat_Pulse_Temperature() = ° C ' This vector of temperatures (in ° C) is for the maximum heat ratio method.
+Public Max_After_Heat_Pulse_Temperature_MA(Number_of_Sap_Flow_TCs) : Units Max_After_Heat_Pulse_Temperature_MA() = ° C ' This vector of temperatures (in ° C) is for the maximum heat ratio method.
+
+' Private Variables:
+
+Dim Reference_Temperature : Units Reference_Temperature = ° C ' This variable is used as the reference temperature for sap flow thermocouple measurements.
+Dim i ' This variable indexes positions of one-dimensional arrays and rows of two-dimensional arrays.
+Dim j ' This variable indexes positions of one-dimensional arrays and columns of two-dimensional arrays.
+Dim Wood_Temperature_Array_1(7, Number_of_Sap_Flow_TCs + Number_of_Wood_Temperature_TCs) : Units Wood_Temperature_Array_1() = ° C ' This array of temperatures (in ° C) is for both the heat ratio and the maximum-heat-ratio methods.
+Dim Wood_Temperature_Array_2(7 * (Number_of_Sap_Flow_TCs + Number_of_Wood_Temperature_TCs)) : Units Wood_Temperature_Array_2() = ° C ' This array of temperatures (in ° C) is for both the heat ratio and the maximum-heat-ratio methods.
+Dim After_Heat_Pulse_Temperature_Array_1(40, Number_of_Sap_Flow_TCs) : Units After_Heat_Pulse_Temperature_Array_1() = ° C ' This array of temperatures (in ° C) is for the maximum-heat-ratio method.
+Dim After_Heat_Pulse_Temperature_Array_2(40 * Number_of_Sap_Flow_TCs) : Units After_Heat_Pulse_Temperature_Array_2() = ° C ' This array of temperatures (in ° C) is for both the heat-ratio and the maximum-heat-ratio methods.
+Dim After_Heat_Pulse_Temperature_Array_3((40 - (Moving_Average_Window - 1)) * Number_of_Sap_Flow_TCs) : Units After_Heat_Pulse_Temperature_Array_3() = ° C ' This array of temperatures (in ° C) is for the maximum-heat-ratio method.
+Dim Max_After_Heat_Pulse_Temperature_1(Number_of_Sap_Flow_TCs, 2) : Units Max_After_Heat_Pulse_Temperature_1() = ° C ' This vector of temperatures (in ° C) is for the maximum-heat-ratio method.
+Dim Max_After_Heat_Pulse_Temperature_MA_1(Number_of_Sap_Flow_TCs, 2) : Units Max_After_Heat_Pulse_Temperature_MA_1() = ° C ' This vector of temperatures (in ° C) is for the maximum-heat-ratio method.
+
+' Data Tables:
+
+DataTable (Data_Table, True, -1)
+  DataInterval (0, 15, Min, 0)
+  Average (1, Panel_Temperature, IEEE4, False)
+  Minimum (1, Battery_Voltage, IEEE4, False, False)
+  #If (Any_Sap_Flow_Sensors_Present) Then
+    Sample ((Number_of_Sap_Flow_TCs + Number_of_Wood_Temperature_TCs), Wood_Temperature(), IEEE4)
+    Sample (Number_of_Sap_Flow_TCs, After_Heat_Pulse_Temperature(), IEEE4)
+    Sample (Number_of_Sap_Flow_TCs, Max_After_Heat_Pulse_Temperature(), IEEE4)
+    Sample (Number_of_Sap_Flow_TCs, Max_After_Heat_Pulse_Temperature_MA(), IEEE4)
+  #EndIf
+  #If (Any_Point_Dendrometers_Present) Then
+    Average (Number_of_Point_Dendrometers, Diameter(), IEEE4, False)
+  #EndIf
+  #If (Any_Wood_Water_Content_Probes_Present) Then
+    Average (Number_of_Wood_Water_Content_Probes, Wood_Water_Content_Raw_Output(), IEEE4, False)
+    Average (Number_of_Wood_Water_Content_Probes, Wood_Water_Content(), IEEE4, False)
+  #EndIf
+  #If (Any_Sap_Pressure_Sensors_Present) Then
+    Average (Number_of_Sap_Pressure_Sensors, Sap_Pressure(), IEEE4, False)
+  #EndIf
+  #If (Any_Soil_Temperature_Probes_Present) Then
+    Average (Number_of_Soil_Temperature_Probes, Soil_Temperature(), IEEE4, False)
+  #EndIf
+EndTable
+
+'The Main Program:
+
+BeginProg
+  Scan (3, Sec, 0, 0)
+    If (TimeIntoInterval (0, 5, Min)) Then
+      ' Measure the battery voltage.
+      Battery (Battery_Voltage)
+      ' Measure the panel temperature.
+      PanelTemp (Panel_Temperature, _60Hz)
+      If (Any_Sap_Pressure_Sensors_Present OR Any_Wood_Water_Content_Probes_Present) Then
+        SW12 (1)
+        ' Measure sap pressure if any sap pressure sensors are connected.
+        If (Any_Sap_Pressure_Sensors_Present) Then
+          MuxSelect (6, 5, 5, 1, 1)
+          Delay (0, 100, mSec)
+          i = 1
+          SubScan (0, uSec, Number_of_Sap_Pressure_Sensors)
+            VoltDiff (Sap_Pressure(i), 1, mV250, 5, True, 0, _60Hz, 1.0, 0)
+            PulsePort (6, 10)
+            i += 1
+          NextSubScan
+          PortSet (5, 0)
+        EndIf
+        ' Measure wood water content if any wood water content sensors are connected.
+        If (Any_Wood_Water_Content_Probes_Present) Then
+          MuxSelect (4, 3, 5, Number_of_Point_Dendrometers + 1, 1)
+          Delay (0, 100, mSec)
+          i = 1
+          SubScan (0, uSec, Ceiling (Number_of_Wood_Water_Content_Probes / 4))
+            VoltSe (Wood_Water_Content_Raw_Output(i), 4, mv5000, 5, 1, 10000, _60Hz, 1.0, 0)
+            PulsePort (4, 10)
+            i += 4
+          NextSubScan
+          PortSet (3, 0)
+          For i = 1 To Number_of_Wood_Water_Content_Probes
+            Wood_Water_Content(i) = (4.824E-10 * (Wood_Water_Content_Raw_Output(i) ^ 3)) - (2.278E-6 * (Wood_Water_Content_Raw_Output(i) ^ 2)) + (3.898E-3 * (Wood_Water_Content_Raw_Output(i))) - 2.154
+          Next i
+        EndIf
+        SW12 (0)
+      EndIf
+      ' Measure fine-scale diameter fluctuations if any point dendrometers are connected.
+      If (Any_Point_Dendrometers_Present) Then
+        MuxSelect (4, 3, 5, 1, 1)
+        Delay (0, 100, mSec)
+        i = 1
+        SubScan (0, uSec, Ceiling (Number_of_Point_Dendrometers / 4))
+          VoltSe(Diameter(i), 4, mV5000, 5, True, 0, _60Hz, 4.0, 0)
+          PulsePort (4, 10)
+          i += 4
+        NextSubScan
+        PortSet (3, 0)
+      EndIf
+      ' Measure soil temperature if any soil temperature sensors are connected.
+      If (Any_Soil_Temperature_Probes_Present) Then
+        MuxSelect (6, 5, 5, Number_of_Sap_Pressure_Sensors + 1, 1)
+        Delay (0, 100, mSec)
+        PanelTemp (Reference_Temperature, _60Hz)
+        i = 1
+        SubScan (0, uSec, Number_of_Soil_Temperature_Probes)
+          TCDiff (Soil_Temperature(i), 1, mV2_5C, 5, TypeE, Reference_Temperature, True, 0, _60Hz, 1.0, 0)
+          PulsePort (6, 10)
+          i += 1
+        NextSubScan
+        PortSet (5, 0)
+      EndIf
+    EndIf
+    ' Record wood temperature and sap flow measurements if any sap flow or wood temperature sensors are connected.
+    If (Any_Sap_Flow_Sensors_Present) Then
+      If (TimeIntoInterval (57, 900, Sec)) Then
+        i = 0
+      EndIf
+      ' Record wood temperatures.
+      If (TimeIsBetween (60, 81, 900, Sec)) Then
+        PortSet (1, 1)
+        Delay (0, 100, mSec)
+        PanelTemp (Reference_Temperature, _60Hz)
+        i += 1
+        j = 1
+        SubScan (0, uSec, Ceiling ((Number_of_Sap_Flow_TCs + Number_of_Wood_Temperature_TCs) / 4))
+          TCSe (Wood_Temperature_Array_1(i, j), 4, mV2_5C, 1, TypeT, Reference_Temperature, 0, 0, _60Hz, 1, 0)
+          PulsePort (2, 10)
+          j += 4
+        NextSubScan
+        PortSet (1, 0)
+      EndIf
+      ' Turn the heaters on.
+      If (TimeIntoInterval (81, 900, Sec)) Then
+        PortSet (7, 1)
+      EndIf
+      ' Turn the heaters off.
+      If (TimeIntoInterval (84, 900, Sec)) Then
+        PortSet (7, 0)
+        i = 0
+      EndIf
+      ' Record after-heat-pulse temperature measurements.
+      If (TimeIsBetween (87, 207, 900, Sec)) Then
+        PortSet (1, 1)
+        Delay (0, 100, mSec)
+        PanelTemp (Reference_Temperature, _60Hz)
+        i += 1
+        j = 1
+        SubScan (0, uSec, Ceiling ((Number_of_Sap_Flow_TCs) / 4))
+          TCSe (After_Heat_Pulse_Temperature_Array_1(i, j), 4, mV2_5C, 1, TypeT, Reference_Temperature, 0, 0, _60Hz, 1, 0)
+          PulsePort (2, 10)
+          j += 4
+        NextSubScan
+        PortSet (1, 0)
+      EndIf
+    EndIf
+    If (TimeIntoInterval (4, 15, Min)) Then
+      ' Process raw sap flow data if any sap flow sensors are connected.
+      If (Any_Sap_Flow_Sensors_Present) Then
+        ' Average the wood temperatures for each thermocouple separately. These values will appear in both the heat-ratio-method and the maximum-heat-ratio-method data tables.
+        For i = 1 To 7
+          For j = 1 To Number_of_Sap_Flow_TCs + Number_of_Wood_Temperature_TCs
+            Wood_Temperature_Array_2(((j - 1) * 7) + i) = Wood_Temperature_Array_1(i, j)
+          Next j
+        Next i
+        For i = 1 To Number_of_Sap_Flow_TCs + Number_of_Wood_Temperature_TCs
+          AvgSpa (Wood_Temperature(i), 7, Wood_Temperature_Array_2(((i - 1) * 7) + 1))
+        Next i
+        ' Average the after-heat-pulse temperatures for each thermocouple separately for the heat-ratio method.
+        For i = 1 To 40
+          For j = 1 To Number_of_Sap_Flow_TCs
+            After_Heat_Pulse_Temperature_Array_2((40 * (j - 1)) + i) = After_Heat_Pulse_Temperature_Array_1(i, j)
+          Next j
+        Next i
+        For i = 1 To Number_of_Sap_Flow_TCs
+          AvgSpa (After_Heat_Pulse_Temperature(i), 14, After_Heat_Pulse_Temperature_Array_2(((i - 1) * 40) + 20))
+        Next i
+        ' Identify the maximum after-heat-pulse temperatures for each thermocouple for the maximum-heat-ratio method.
+        For i = 1 To Number_of_Sap_Flow_TCs
+          MaxSpa (Max_After_Heat_Pulse_Temperature_1(i, 1), 40, After_Heat_Pulse_Temperature_Array_2((40 * (i - 1)) + 1))
+        Next i
+        For i = 1 To Number_of_Sap_Flow_TCs
+          Max_After_Heat_Pulse_Temperature(i) = Max_After_Heat_Pulse_Temperature_1(i, 1)
+        Next i
+        ' Calculate all moving averages of after-heat-pulse temperatures for the maximum-heat-ratio method.
+        For j = 1 To Number_of_Sap_Flow_TCs
+          For i = 1 To (40 - (Moving_Average_Window - 1))
+            AvgSpa (After_Heat_Pulse_Temperature_Array_3(((40 - (Moving_Average_Window - 1)) * (j - 1)) + i), Moving_Average_Window, After_Heat_Pulse_Temperature_Array_2((40 * (j - 1)) + i)
+          Next i
+        Next j
+        ' Identify the maximum after-heat-pulse-temperature moving averages for each thermocouple.
+        For i = 1 To Number_of_Sap_Flow_TCs
+          MaxSpa (Max_After_Heat_Pulse_Temperature_MA_1(i, 1), 40 - (Moving_Average_Window - 1), After_Heat_Pulse_Temperature_Array_3(((40 - (Moving_Average_Window - 1)) * (i - 1)) + 1))
+        Next i
+        For i = 1 To Number_of_Sap_Flow_TCs
+          Max_After_Heat_Pulse_Temperature_MA(i) = Max_After_Heat_Pulse_Temperature_MA_1(i, 1)
+        Next i
+      EndIf
+    EndIf
+    CallTable Data_Table
+  NextScan
+EndProg
+
+
+' Works Cited
+
+' Burgess, S.S.O., M.A. Adams, N.C. Turner, C.R. Beverly,
+' C.K. Ong, A.A.H. Khan, and T.M. Bleby. 2001. An improved
+' heat pulse method to measure low and reverse rates of sap
+' flow in woody plants. Tree Physiol. 21:589-598.
