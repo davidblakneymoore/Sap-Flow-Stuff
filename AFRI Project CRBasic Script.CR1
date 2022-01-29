@@ -123,8 +123,8 @@
 ' Use an Adjustable LM2596S DC-DC Buck Converter Reduced
 ' Voltage Regulator Power Module 36V 24V 12V to 5V 2A Voltage
 ' Stabilizer with Digital Voltmeter Display buck converter to
-' reduce the voltage from the datlogger's '5V' port to 4.8 V.
-' This buck converter will provide power to the point
+' reduce the voltage from the datalogger's '5V' port to 4.8
+' V. This buck converter will provide power to the point
 ' dendrometers. Run one wire from the '5V' port on the
 ' datalogger to the 'IN+' port on this buck converter. Run
 ' another wire from a 'G' port on the datalogger to the 'IN-'
