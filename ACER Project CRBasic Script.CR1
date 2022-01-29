@@ -87,15 +87,15 @@
 ' Use an Adjustable LM2596S DC-DC Buck Converter Reduced
 ' Voltage Regulator Power Module 36V 24V 12V to 5V 2A Voltage
 ' Stabilizer with Digital Voltmeter Display buck converter to
-' reduce the voltage from the datlogger's 'SW12' port to 10.0
-' V. This buck converter will provide the excitation voltage
-' for the sap pressure sensors and for the load cells. Run
-' one wire from the 'SW12' port on the datalogger to the
-' 'IN+' port on this buck converter. Run another wire from a
-' 'G' port on the datalogger to the 'IN-' port on this buck
-' converter. The red wires from the sap pressure sensors and
-' the red wires from the load cells must be connected to the
-' 'OUT+' port on this buck converter, and the black wires
+' reduce the voltage from the datalogger's 'SW12' port to
+' 10.0 V. This buck converter will provide the excitation
+' voltage for the sap pressure sensors and for the load
+' cells. Run one wire from the 'SW12' port on the datalogger
+' to the 'IN+' port on this buck converter. Run another wire
+' from a 'G' port on the datalogger to the 'IN-' port on this
+' buck converter. The red wires from the sap pressure sensors
+' and the red wires from the load cells must be connected to
+' the 'OUT+' port on this buck converter, and the black wires
 ' from the sap pressure sensors and the black wires from the
 ' load cells may be connected to the 'OUT-' port on this buck
 ' converter.
