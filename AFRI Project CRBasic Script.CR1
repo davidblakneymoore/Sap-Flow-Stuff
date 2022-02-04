@@ -117,6 +117,7 @@
 ' 12V --> 12V
 ' COM ODD H --> DIFF 5 H
 ' COM ODD L --> DIFF 5 L
+' COM ground --> DIFF ground
 ' This multiplexer must be in '2X32' mode to read sensors in
 ' differential mode.
 
