@@ -1,0 +1,308 @@
+' Sap Flow CRBasic Script for the Gotsch Lab
+
+' David Moore
+' University of New Hampshire Ecohydrology Lab
+' davidblakneymoore@gmail.com
+' March 2022
+
+
+' Materials Needed:
+
+' One Campbell Scientific Measurement and Control Datalogger
+' (CR1000)
+
+' One Campbell Scientific 16- or 32-Channel Relay
+' Multiplexer (AM16/32B)
+
+' One Kyotto Relay Solid State 32 Volt DC Input 4 Amp 60 Volt
+' DC Output 4-Pin
+
+' Heat-pulse sap flow sensors following the heat ratio method
+' (Burgess et al., 2001) and the maximum heat ratio method
+' (J. Gutierrez Lopez, unpublished) built in-house
+
+
+' Wiring Instructions and Comments:
+
+' This script is for reading heat-pulse sap flow sensors
+' following the heat-ratio method (Burgess et al., 2001) and
+' the maximum-heat-ratio method (J. Gutierrez Lopez,
+' unpublished) that have been built in-house. These sap flow
+' sensors are read in single-ended mode - each measurement
+' probe contains more than one thermocouple that share a
+' common ground (constantan wire).
+
+' This script requires one Campbell Scientific Measurement
+' and Control Datalogger (CR1000) and one Campbell Scientific
+' 16- or 32-Channel Relay Multiplexer (AM16/32B).
+
+' The multiplexer will be used to record sap flow
+' measurements and it must be wired as follows (multiplexer
+' port --> datalogger port):
+' RES --> C1
+' CLK --> C2
+' G --> G
+' 12V --> 12V
+' COM ODD H --> SE 1
+' COM ODD L --> SE 2
+' COM ground --> SE ground
+' COM EVEN H --> SE 3
+' COM EVEN L --> SE 4
+' This multiplexer must be in '4X16' mode to read sensors in
+' single-ended mode.
+
+' Sap flow sensor heaters are powered by one of the
+' datalogger's '12V' ports, but a custom relay circuit that
+' uses a Kyotto Relay Solid State 32 Volt DC Input 4 Amp 60
+' Volt DC Output 4-Pin relay is used to turn the heaters on
+' and off using the datalogger's 'C5' port. Run a wire from
+' the '+2' terminal on the relay to the datalogger's 'C5'
+' port. Run another wire from the '1-' terminal on the relay
+' to one of the datalogger's 'G' ports. Run another wire from
+' the '+4' terminal of the relay to one of the datalogger's
+' '12V' ports. The '3-' terminal of the relay must be
+' connected to each of the sap flow heaters. The other end of
+' each sap flow heater must be connected to one of the
+' datalogger's 'G' ports. This connection occurs through the
+' custom relay circuit. Following these wiring instructions,
+' and using the custom relay circuit, sap flow heaters should
+' be connected in parallel - if one of them breaks, the
+' others will still function properly, and they will all
+' receive approximately 12 V from the battery (although the
+' actual amount of voltage they will receive will be slightly
+' lower than the battery voltage due to a voltage drop across
+' the solid-state relay). The datalogger's 'C1' through 'C8'
+' ports, which can each supply 5 V, are better options than
+' the datalogger's 'Vx1' port for turning on and off this
+' relay due to the input voltage range of the relay (3 V to
+' 32 V). The 'Vx1' port can only supply up to 2.5 V. These
+' custom relay circuits were built in-house. Please contact
+' David for details on how to build these relay circuits.
+
+' The sap flow sensors used in this project are read in
+' single-ended mode. They are comprised of three probes (an
+' upper probe which contains thermocouples, a middle probe
+' which contains a heater, and a lower probe which contains
+' thermocouples). Each upper and lower sap flow probe has
+' three copper-constantan (Type T) thermocouples. For each of
+' these two probes, there is one constantan wire and there
+' are three copper wires. The three copper wires are soldered
+' to the constantan wire at different positions (0.50, 1.75,
+' and 3.00 cm from the body of the probe) to allow sap flow
+' to be estimated at three different depths (an outer depth,
+' a middle depth, and an inner depth). Single-ended
+' thermocouples are nowhere near as precise as differential
+' thermocouples, so although relative differences in sap flow
+' across different sapwood depths may be reliable, sap flow
+' data will not be totally accurate. Furthermore, the
+' constantan wires from the upper and lower probes within
+' each sap flow sensor are connected before the wires are
+' connected to the multiplexer, and the constantan wires from
+' all the sap flow sensors on one multiplexer are connected
+' to the same ground, so the sap flow signal will be somewhat
+' muted across sensors connected to the same multuiplexer.
+' The shared ground on the multiplexer is what is used as a
+' reference when measuring voltage for each single-ended
+' thermocouple's copper wire. The middle probe is a heater
+' which consists of a three-loop, 1.5-in coil of 36-AWG
+' nichrome wire which spans the positions of the three
+' thermocouples in the upper and lower probes.
+
+' All sap flow sensor constantan wires are connected to the
+' ground ports on the multiplexer. These ground ports are
+' denoted by an upside-down triangle. Copper wires are
+' connected the the single-ended ports of the multiplexer.
+' These ports are labeled 'H' and 'L'. The outer copper wire
+' from the upper sensor is connected first, followed by the
+' middle copper wire from the upper sensor, the inner copper
+' wire from the upper sensor, the outer copper wire from the
+' lower sensor, the middle copper wire from the lower sensor,
+' and the inner copper wire from the lower sensor. The six
+' copper wires from one sensor are connected to consecutive
+' ports on the multiplexer; when multiple sap flow sensors
+' are connected to one multiplexer, this sequence is
+' repeated. The Ecohydrology Lab has standardized the
+' insulation colors of these 6 copper wires - the copper wire
+' from the upper probe's outer thermocouple is green, the
+' copper wire from the upper probe's middle thermocouple is
+' white, the copper wire from the upper probe's inner
+' thermocouple is red, the copper wire from the lower probe's
+' outer thermocouple is blue, the copper wire from the lower
+' probe's middle thermocouple is brown, and the copper wire
+' from the lower probe's inner thermocouple is black.
+
+' This code collects sap flow data every 3 s. There are 7
+' measurements recorded immediately before the heat pulse,
+' there is a 3-s heat pulse, and then there are 40
+' measurements recorded immediately after the heat pulse. No
+' measurements are taken during the heat pulse, so there is
+' a 9-s gap between the end of the before-heat-pulse
+' measurements and the beginning of the after-heat-pulse
+' measurements. Wood temperatures are reported as the average
+' of the 7 before-heat-pulse temperature measurements. After-
+' heat-pulse temperatures for the heat-ratio method are
+' reported as the average of the 14 measurements that are
+' recorded starting at 60 s after the heat pulse and ending
+' at 99 s after the heat pulse. For the maximum-heat-ratio
+' method, maximum values are computed across the 40
+' measurements recorded for each sap flow thermocouple after
+' the heat pulse (starting at 3 s after the heat pulse and
+' ending at 120 s after the heat pulse).
+
+' Thank you to my sap flow mentor, Jose Gutierrez Lopez, and
+' to the Campbell Scientific technicians who taught me how to
+' program CR1000 dataloggers.
+
+
+' The Program
+
+SequentialMode
+
+' Station Name:
+
+StationName Gotsch_Lab_Sap_Flow_Station
+
+' Constants That May Change:
+
+Const Number_of_Sap_Flow_Thermocouples = 64 ' This constant specifies how many wood temperature sensor thermocouples are connected to the multiplexer. The sum of the 'Number_of_Sap_Flow_Thermocouples' and the 'Number_of_Wood_Temperature_Thermocouples' constants cannot be greater than 64.
+Const Moving_Average_Window = 3 ' This constant specifies how many values are used when computing moving averages for the maximum-heat-ratio method. It must be a positive, odd integer or else the moving average window won't be centered on the correct point. It must also be less than 40, which is how many measurements are recorded after the heat pulse.
+
+' Public Variables:
+
+Public Big_Battery_Voltage : Units Big_Battery_Voltage = V ' This variable measures the voltage (in V) of the 12-V lead-acid battery that powers the heaters.
+Public Small_Battery_Voltage : Units Small_Battery_Voltage = V ' This variable measures the voltage (in V) of the 3.6-V lithium-ion battery that powers the datalogger.
+Public Panel_Temperature : Units Panel_Temperature = ° C ' This variable measures the temperature (in ° C) of the panel.
+Public Reference_Temperature : Units Reference_Temperature = ° C ' This variable is used as the reference temperature for sap flow thermocouple measurements.
+Public Wood_Temperature_Array_1(7, Number_of_Sap_Flow_Thermocouples) : Units Wood_Temperature_Array_1() = ° C ' This array of temperatures (in ° C) is for both the heat ratio and the maximum-heat-ratio methods.
+Public After_Heat_Pulse_Temperature_Array_1(40, Number_of_Sap_Flow_Thermocouples) : Units After_Heat_Pulse_Temperature_Array_1() = ° C ' This array of temperatures (in ° C) is for the maximum-heat-ratio method.
+Public Wood_Temperature_Array_2(7*(Number_of_Sap_Flow_Thermocouples)) : Units Wood_Temperature_Array_2() = ° C ' This array of temperatures (in ° C) is for both the heat ratio and the maximum-heat-ratio methods.
+Public Wood_Temperature(Number_of_Sap_Flow_Thermocouples) : Units Wood_Temperature() = ° C ' This vector of temperatures (in ° C) is for both the heat ratio and the maximum heat ratio methods.
+Public After_Heat_Pulse_Temperature_Array_2(40*Number_of_Sap_Flow_Thermocouples) : Units After_Heat_Pulse_Temperature_Array_2() = ° C ' This array of temperatures (in ° C) is for both the heat-ratio and the maximum-heat-ratio methods.
+Public After_Heat_Pulse_Temperature(Number_of_Sap_Flow_Thermocouples) : Units After_Heat_Pulse_Temperature() = ° C ' This vector of temperatures (in ° C) is for the heat ratio method.
+Public Max_After_Heat_Pulse_Temperature_1(Number_of_Sap_Flow_Thermocouples, 2) : Units Max_After_Heat_Pulse_Temperature_1() = ° C ' This vector of temperatures (in ° C) is for the maximum-heat-ratio method.
+Public Max_After_Heat_Pulse_Temperature(Number_of_Sap_Flow_Thermocouples) : Units Max_After_Heat_Pulse_Temperature() = ° C ' This vector of temperatures (in ° C) is for the maximum heat ratio method.
+Public After_Heat_Pulse_Temperature_Array_3((40-(Moving_Average_Window-1))*Number_of_Sap_Flow_Thermocouples) : Units After_Heat_Pulse_Temperature_Array_3() = ° C ' This array of temperatures (in ° C) is for the maximum-heat-ratio method.
+Public Max_After_Heat_Pulse_Temperature_MA_1(Number_of_Sap_Flow_Thermocouples, 2) : Units Max_After_Heat_Pulse_Temperature_MA_1() = ° C ' This vector of temperatures (in ° C) is for the maximum-heat-ratio method.
+Public Max_After_Heat_Pulse_Temperature_MA(Number_of_Sap_Flow_Thermocouples) : Units Max_After_Heat_Pulse_Temperature_MA() = ° C ' This vector of temperatures (in ° C) is for the maximum heat ratio method.
+
+' Private Variables:
+
+Dim i ' This variable indexes positions of one-dimensional arrays and rows of two-dimensional arrays.
+Dim j ' This variable indexes positions of one-dimensional arrays and columns of two-dimensional arrays.
+
+' Data Tables:
+
+DataTable (Data_Table, True, -1)
+  DataInterval (0, 15, Min, 0)
+  Average (1, Panel_Temperature, IEEE4, False)
+  Minimum (1, Big_Battery_Voltage, IEEE4, False, False)
+  Minimum (1, Small_Battery_Voltage, IEEE4, False, False)
+  Sample (Number_of_Sap_Flow_Thermocouples, Wood_Temperature(), IEEE4)
+  Sample (Number_of_Sap_Flow_Thermocouples, After_Heat_Pulse_Temperature(), IEEE4)
+  Sample (Number_of_Sap_Flow_Thermocouples, Max_After_Heat_Pulse_Temperature(), IEEE4)
+  Sample (Number_of_Sap_Flow_Thermocouples, Max_After_Heat_Pulse_Temperature_MA(), IEEE4)
+EndTable
+
+'The Main Program:
+
+BeginProg
+  Scan (3, Sec, 0, 0)
+    If (TimeIntoInterval (0, 5, Min)) Then
+      ' Measure the battery voltages.
+      Battery (Big_Battery_Voltage)
+      Small_Battery_Voltage = Status.LithiumBattery
+      ' Measure the panel temperature.
+      PanelTemp (Panel_Temperature, _60Hz)
+    EndIf
+    If (TimeIntoInterval (57, 900, Sec)) Then
+      i = 0
+    EndIf
+    If (TimeIsBetween (60, 81, 900, Sec)) Then
+      ' Record wood temperatures.
+      PortSet (1, 1)
+      Delay (0, 100, mSec)
+      PanelTemp (Reference_Temperature, _60Hz)
+      i += 1
+      j = 1
+      SubScan (0, uSec, (Number_of_Sap_Flow_Thermocouples)/4)
+        TCSe (Wood_Temperature_Array_1(i, j), 4, mV2_5C, 1, TypeT, Reference_Temperature, 0, 0, _60Hz, 1, 0)
+        PulsePort (2, 10)
+        j += 4
+      NextSubScan
+      PortSet (1, 0)
+    EndIf
+    ' Turn the heaters on.
+    If (TimeIntoInterval (81, 900, Sec)) Then
+      PortSet (5, 1)
+    EndIf
+    ' Turn the heaters off.
+    If (TimeIntoInterval (84, 900, Sec)) Then
+      PortSet (5, 0)
+      i = 0
+    EndIf
+    ' Record after-heat-pulse temperature measurements.
+    If (TimeIsBetween (87, 207, 900, Sec)) Then
+      PortSet (1, 1)
+      Delay (0, 100, mSec)
+      PanelTemp (Reference_Temperature, _60Hz)
+      i += 1
+      j = 1
+      SubScan (0, uSec, Number_of_Sap_Flow_Thermocouples/4)
+        TCSe (After_Heat_Pulse_Temperature_Array_1(i, j), 4, mV2_5C, 1, TypeT, Reference_Temperature, 0, 0, _60Hz, 1, 0)
+        PulsePort (2, 10)
+        j += 4
+      NextSubScan
+      PortSet (1, 0)
+    EndIf
+    If (TimeIntoInterval (4, 15, Min)) Then
+      ' Process raw sap flow data.
+      ' Average the wood temperatures for each thermocouple separately. These values will appear in both the heat-ratio-method and the maximum-heat-ratio-method data tables.
+      For i = 1 To 7
+        For j = 1 To Number_of_Sap_Flow_Thermocouples
+          Wood_Temperature_Array_2(((j-1)*7)+i) = Wood_Temperature_Array_1(i, j)
+        Next j
+      Next i
+      For i = 1 To Number_of_Sap_Flow_Thermocouples
+        AvgSpa (Wood_Temperature(i), 7, Wood_Temperature_Array_2(((i-1)*7)+1))
+      Next i
+      ' Average the after-heat-pulse temperatures for each thermocouple separately for the heat-ratio method.
+      For i = 1 To 40
+        For j = 1 To Number_of_Sap_Flow_Thermocouples
+          After_Heat_Pulse_Temperature_Array_2((40*(j-1))+i) = After_Heat_Pulse_Temperature_Array_1(i, j)
+        Next j
+      Next i
+      For i = 1 To Number_of_Sap_Flow_Thermocouples
+        AvgSpa (After_Heat_Pulse_Temperature(i), 14, After_Heat_Pulse_Temperature_Array_2(((i-1)*40)+20))
+      Next i
+      ' Identify the maximum after-heat-pulse temperatures for each thermocouple for the maximum-heat-ratio method.
+      For i = 1 To Number_of_Sap_Flow_Thermocouples
+        MaxSpa (Max_After_Heat_Pulse_Temperature_1(i, 1), 40, After_Heat_Pulse_Temperature_Array_2((40*(i-1))+1))
+      Next i
+      For i = 1 To Number_of_Sap_Flow_Thermocouples
+        Max_After_Heat_Pulse_Temperature(i) = Max_After_Heat_Pulse_Temperature_1(i, 1)
+      Next i
+      ' Calculate all moving averages of after-heat-pulse temperatures for the maximum-heat-ratio method.
+      For j = 1 To Number_of_Sap_Flow_Thermocouples
+        For i = 1 To (40-(Moving_Average_Window-1))
+          AvgSpa (After_Heat_Pulse_Temperature_Array_3(((40-(Moving_Average_Window-1))*(j-1))+i), Moving_Average_Window, After_Heat_Pulse_Temperature_Array_2((40*(j-1))+i)
+        Next i
+      Next j
+      ' Identify the maximum after-heat-pulse-temperature moving averages for each thermocouple.
+      For i = 1 To Number_of_Sap_Flow_Thermocouples
+        MaxSpa (Max_After_Heat_Pulse_Temperature_MA_1(i, 1), 40-(Moving_Average_Window-1), After_Heat_Pulse_Temperature_Array_3(((40-(Moving_Average_Window-1))*(i-1))+1))
+      Next i
+      For i = 1 To Number_of_Sap_Flow_Thermocouples
+        Max_After_Heat_Pulse_Temperature_MA(i) = Max_After_Heat_Pulse_Temperature_MA_1(i, 1)
+      Next i
+    EndIf
+    CallTable Data_Table
+  NextScan
+EndProg
+
+
+' Works Cited
+
+' Burgess, S.S.O., M.A. Adams, N.C. Turner, C.R. Beverly,
+' C.K. Ong, A.A.H. Khan, and T.M. Bleby. 2001. An improved
+' heat pulse method to measure low and reverse rates of sap
+' flow in woody plants. Tree Physiol. 21:589-598.
