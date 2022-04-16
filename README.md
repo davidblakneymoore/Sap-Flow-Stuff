@@ -4,7 +4,6 @@ This repository contains a CRBasic program that collects sap flow measurements u
 
 This repository also contains an R script for processing these data.
 
-
 <b>Works Cited</b>
 
 Burgess, S.S.O., M.A. Adams, N.C. Turner, C.R. Beverly, C.K. Ong, A.A.H. Khan, and T.M. Bleby. 2001. An improved heat pulse method to measure low and reverse rates of sap flow in woody plants. Tree Physiol. 21:589-598.
