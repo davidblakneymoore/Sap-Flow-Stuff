@@ -1,8 +1,8 @@
 # Sap-Flow-Stuff
 
-This repository contains two CRBasic programs. One collects sap flow measurements using heat-pulse sap flow sensors read in differential mode, sap yield measurements, and sap pressure measurements. The other collects sap flow measurements using heat-pulse sap flow sensors read in single-ended mode, fine-scale diameter fluctuation measurements, wood water content measurements, sap pressure measurements, and soil temperature measurements. In both of these programs, both the heat-ratio method (Burgess et al., 2001) and the maximum-heat-ratio method (J. Gutierrez Lopez, unpublished) are used to measure sap flow. Neither of these programs record raw sap flow data.
+This repository contains a CRBasic program that collects sap flow measurements using heat-pulse sap flow sensors read in single-ended mode. In this program, both the heat-ratio method (Burgess et al., 2001) and the maximum-heat-ratio method (J. Gutierrez Lopez, unpublished) are used to measure sap flow. This program does not record raw sap flow data.
 
-Eventually, I'll add the R code I'll use to process these data to this repository too.
+This repository also contains an R script for processing these data.
 
 <b>Works Cited</b>
 
