@@ -1,18 +1,13 @@
 
-# R Script for Processing Sap Flow Data
-
-# David Moore
-# davidblakneymoore@gmail.com
-# University of New Hampshire Ecohydrology Lab
-# April 2022
+# R Script for Processing Sap Flow Data (for Multiple Stations)
 
 
 # Constants and Metadata
 
 # Constants
 
-Working_Directory <- "/Users/davidblakneymoore/Sap Flow Data"
-Unique_Station_Names <- c("Station_1", "Station_2", "Station_3")
+Working_Directory <- "/Users/davidblakneymoore/Documents/Robyn and Damon's Data"
+Unique_Station_Names <- c("CR1000_test")
 Number_of_Ports_Read_in_Each_Station <- 64
 Thermal_Diffusivity_of_Green_Wood <- 0.0019
 Wood_Density <- 700 # Units: kg * m ^ -3
@@ -31,17 +26,9 @@ d <- 0.0002 # This constant is for the wound-correction equation that I didn't i
 Time_Between_Measurements <- 15 # Units: min
 Wire_Colors <- c("blue", "brown", "black")
 
-# Station_1
+# Station 'CR1000_test'
 
-Ports_Used_in_Station_1 <- c(1:24)
-
-# Station_2
-
-Ports_Used_in_Station_2 <- c(1:46, 49:50)
-
-# Station_3
-
-Ports_Used_in_Station_3 <- c(3:38)
+Ports_Used_in_Station_CR1000_test <- c(1:24)
 
 # Functions
 
@@ -66,13 +53,9 @@ Number_of_Measurements_in_a_Day <- Number_of_Hours_in_a_Day * Number_of_Minutes_
 
 # Generating a list of station metadata
 
-Ports_Used_in_Station_1 <- I(list(Ports_Used_in_Station_1))
-Ports_Used_in_Station_2 <- I(list(Ports_Used_in_Station_2))
-Ports_Used_in_Station_3 <- I(list(Ports_Used_in_Station_3))
-Station_1 <- data.frame(Ports_Used = Ports_Used_in_Station_1)
-Station_2 <- data.frame(Ports_Used = Ports_Used_in_Station_2)
-Station_3 <- data.frame(Ports_Used = Ports_Used_in_Station_3)
-Station_Data_List <- list(Station_1 = Station_1, Station_2 = Station_2, Station_3 = Station_3)
+Ports_Used_in_Station_CR1000_test <- I(list(Ports_Used_in_Station_CR1000_test))
+CR1000_test <- data.frame(Ports_Used = Ports_Used_in_Station_CR1000_test)
+Station_Data_List <- list(CR1000_test = CR1000_test)
 Station_Data_List <- Station_Data_List[order(names(Station_Data_List))]
 
 
@@ -165,27 +148,30 @@ Sap_Flow_Data_List <- lapply(Sap_Flow_Data_List, function (x) {
 
 Upper_Thermocouples_Only <- rep(c(T, F), each = Number_of_Thermocouples_Per_Sensor)
 Lower_Thermocouples_Only <- rep(c(F, T), each = Number_of_Thermocouples_Per_Sensor)
-Outer_Thermocouples_Only <- rep(c(T, F, F), 2) # This must be changed if you aren't using sensors with three thermocouples in each probe!
-Middle_Thermocouples_Only <- rep(c(F, T, F), 2) # This must be changed if you aren't using sensors with three thermocouples in each probe!
-Inner_Thermocouples_Only <- rep(c(F, F, T), 2) # This must be changed if you aren't using sensors with three thermocouples in each probe!
+Thermocouple_Indices <- lapply(seq_len(Number_of_Thermocouples_Per_Sensor), function (x) {
+  y <- rep(F, Number_of_Thermocouples_Per_Sensor)
+  y[x] <- T
+  y
+})
+Multiplexer_Ports <- lapply(Station_Data_List, function (x) {
+  unlist(lapply(seq_len(length(unlist(x$Ports_Used)) / 2 / Number_of_Thermocouples_Per_Sensor), function (y) {
+    sapply(seq_len(length(Thermocouple_Indices)), function (z) {
+      paste(unlist(x$Ports_Used)[Thermocouple_Indices[[z]]][(2 * (y - 1)) + 1], "and", unlist(x$Ports_Used)[Thermocouple_Indices[[z]]][(2 * y)], sep = "_")
+    })
+  }))
+})
 Sap_Flow_Data_List <- mapply(function (x, y) {
-  Multiplexer_Ports <- NULL
-  for (i in seq_len(length(unlist(y$Ports_Used)) / 2 / Number_of_Thermocouples_Per_Sensor)) { # This must be changed if you aren't using sensors with three thermocouples in each probe!
-    Multiplexer_Ports[3 * (i - 1) + 1] <- paste(unlist(y$Ports_Used)[Outer_Thermocouples_Only][2 * (i - 1) + 1], "and", unlist(y$Ports_Used)[Outer_Thermocouples_Only][2 * (i - 1) + 2], sep = "_")
-    Multiplexer_Ports[3 * (i - 1) + 2] <- paste(unlist(y$Ports_Used)[Middle_Thermocouples_Only][2 * (i - 1) + 1], "and", unlist(y$Ports_Used)[Middle_Thermocouples_Only][2 * (i - 1) + 2], sep = "_")
-    Multiplexer_Ports[3 * (i - 1) + 3] <- paste(unlist(y$Ports_Used)[Inner_Thermocouples_Only][2 * (i - 1) + 1], "and", unlist(y$Ports_Used)[Inner_Thermocouples_Only][2 * (i - 1) + 2], sep = "_")
-  }
   Heat_Ratio_Method_Ratios <- x[, setdiff(grep("Heat_Ratio_Method_Delta", colnames(x)), grep("Maximum_Heat_Ratio_Method_Delta", colnames(x)))][Upper_Thermocouples_Only] / x[, setdiff(grep("Heat_Ratio_Method_Delta", colnames(x)), grep("Maximum_Heat_Ratio_Method_Delta", colnames(x)))][Lower_Thermocouples_Only]
   colnames(Heat_Ratio_Method_Ratios) <- gsub("Multiplexer_Port_[[:digit:]]*$", "Multiplexer_Ports", gsub("Delta", "Ratio", colnames(Heat_Ratio_Method_Ratios)))
-  colnames(Heat_Ratio_Method_Ratios) <- paste(colnames(Heat_Ratio_Method_Ratios), Multiplexer_Ports, sep = "_")
+  colnames(Heat_Ratio_Method_Ratios) <- paste(colnames(Heat_Ratio_Method_Ratios), y, sep = "_")
   Maximum_Heat_Ratio_Method_Ratios <- x[, setdiff(grep("Maximum_Heat_Ratio_Method_Delta", colnames(x)), grep("Maximum_Heat_Ratio_Method_Moving_Average_Delta", colnames(x)))][Upper_Thermocouples_Only] / x[, setdiff(grep("Maximum_Heat_Ratio_Method_Delta", colnames(x)), grep("Maximum_Heat_Ratio_Method_Moving_Average_Delta", colnames(x)))][Lower_Thermocouples_Only]
   colnames(Maximum_Heat_Ratio_Method_Ratios) <- gsub("Multiplexer_Port_[[:digit:]]*$", "Multiplexer_Ports", gsub("Delta", "Ratio", colnames(Maximum_Heat_Ratio_Method_Ratios)))
-  colnames(Maximum_Heat_Ratio_Method_Ratios) <- paste(colnames(Maximum_Heat_Ratio_Method_Ratios), Multiplexer_Ports, sep = "_")
+  colnames(Maximum_Heat_Ratio_Method_Ratios) <- paste(colnames(Maximum_Heat_Ratio_Method_Ratios), y, sep = "_")
   Maximum_Heat_Ratio_Method_Moving_Average_Ratios <- x[, grep("Maximum_Heat_Ratio_Method_Moving_Average_Delta", colnames(x))][Upper_Thermocouples_Only] / x[, grep("Maximum_Heat_Ratio_Method_Moving_Average_Delta", colnames(x))][Lower_Thermocouples_Only]
   colnames(Maximum_Heat_Ratio_Method_Moving_Average_Ratios) <- gsub("Multiplexer_Port_[[:digit:]]*$", "Multiplexer_Ports", gsub("Delta", "Ratio", colnames(Maximum_Heat_Ratio_Method_Moving_Average_Ratios)))
-  colnames(Maximum_Heat_Ratio_Method_Moving_Average_Ratios) <- paste(colnames(Maximum_Heat_Ratio_Method_Moving_Average_Ratios), Multiplexer_Ports, sep = "_")
+  colnames(Maximum_Heat_Ratio_Method_Moving_Average_Ratios) <- paste(colnames(Maximum_Heat_Ratio_Method_Moving_Average_Ratios), y, sep = "_")
   cbind(x, Heat_Ratio_Method_Ratios, Maximum_Heat_Ratio_Method_Ratios, Maximum_Heat_Ratio_Method_Moving_Average_Ratios)
-}, x = Sap_Flow_Data_List, y = Station_Data_List, SIMPLIFY = F)
+}, x = Sap_Flow_Data_List, y = Multiplexer_Ports, SIMPLIFY = F)
 
 # Calculate the heat pulse velocities
 
@@ -209,7 +195,7 @@ Sap_Flow_Data_List <- lapply(Sap_Flow_Data_List, function (x) {
 
 # Calculate the sap velocities
 
-Sap_Velocity_List <- lapply(Sap_Flow_Data_List, function (x) {
+Sap_Flow_Data_List <- lapply(Sap_Flow_Data_List, function (x) {
   Sap_Velocities <- as.data.frame(lapply(x[grep("Heat_Pulse_Velocity", colnames(x))], Sap_Velocity_Function))
   colnames(Sap_Velocities) <- gsub("Heat_Pulse_Velocity", "Sap_Velocity", colnames(Sap_Velocities))
   cbind(x, Sap_Velocities)
@@ -225,6 +211,3 @@ Sap_Velocity_List <- lapply(Sap_Flow_Data_List, function (x) {
 # Burgess, S.S.O., M.A. Adams, N.C. Turner, C.R. Beverly, C.K. Ong, A.A.H.
 # Khan, and T.M. Bleby. 2001. An improved heat pulse method to measure low and
 # reverse rates of sap flow in woody plants. Tree Physiol. 21:589-598.
-
-# Marshall, D.C. 1958. Measurement of sap flow in conifers by heat transport.
-# Plant Physiol. 33:385-396.
