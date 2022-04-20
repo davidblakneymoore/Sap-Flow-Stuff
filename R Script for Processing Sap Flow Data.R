@@ -1,5 +1,9 @@
 
-# R Script for Processing Sap Flow Data (for Multiple Stations)
+# R Script for Processing Sap Flow Data
+
+# David Moore
+# davidblakneymoore@gmail.com
+# April 2022
 
 
 # Constants and Metadata
