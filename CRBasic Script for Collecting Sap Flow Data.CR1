@@ -149,6 +149,11 @@
 ' the heat pulse (starting at 3 s after the heat pulse and
 ' ending at 120 s after the heat pulse).
 
+' This CRBasic script can be used in conjunction with the 'R
+' Script for Processing Sap Flow Data.R' R script
+' (https://github.com/davidblakneymoore/Sap-Flow-Stuff/blob/main/R%20Script%20for%20Processing%20Sap%20Flow%20Data.R)
+' for data processing.
+
 ' Thank you to my sap flow mentor, Jose Gutierrez Lopez, and
 ' to the Campbell Scientific technicians who taught me how to
 ' program CR1000 dataloggers.
@@ -160,7 +165,7 @@ SequentialMode
 
 ' Station Name:
 
-StationName Gotsch_Lab_Sap_Flow_Station
+StationName Station_1
 
 ' Constants That May Change:
 
