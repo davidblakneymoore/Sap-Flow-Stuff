@@ -9,8 +9,8 @@
 # Explanation
 
 # This script should be used in conjunction with the 'CRBasic Script for
-# Collecting Sap Flow Data.CR1'
-# CRBasic script (https://github.com/davidblakneymoore/Sap-Flow-Stuff/blob/main/CRBasic%20Script%20for%20Collecting%20Sap%20Flow%20Data.CR1).
+# Collecting Sap Flow Data.CR1' CRBasic script
+# (https://github.com/davidblakneymoore/Sap-Flow-Stuff/blob/main/CRBasic%20Script%20for%20Collecting%20Sap%20Flow%20Data.CR1).
 # Please refer to that script for specific instructions about sensors.
 
 
