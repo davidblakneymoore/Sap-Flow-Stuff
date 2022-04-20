@@ -6,8 +6,8 @@
 
 # Constants
 
-Working_Directory <- "/Users/davidblakneymoore/Documents/Robyn and Damon's Data"
-Unique_Station_Names <- c("CR1000_test")
+Working_Directory <- "C:/Sap Flow Data"
+Unique_Station_Names <- c("Station_1", "Station_2", "Statin_3")
 Number_of_Ports_Read_in_Each_Station <- 64
 Thermal_Diffusivity_of_Green_Wood <- 0.0019
 Wood_Density <- 700 # Units: kg * m ^ -3
@@ -26,9 +26,17 @@ d <- 0.0002 # This constant is for the wound-correction equation that I didn't i
 Time_Between_Measurements <- 15 # Units: min
 Wire_Colors <- c("blue", "brown", "black")
 
-# Station 'CR1000_test'
+# Station 'Station_1'
 
-Ports_Used_in_Station_CR1000_test <- c(1:24)
+Ports_Used_in_Station_1 <- c(1:24)
+
+# Station 'Station_2'
+
+Ports_Used_in_Station_2 <- c(1:48)
+
+# Station 'Station_3'
+
+Ports_Used_in_Station_3 <- c(1:22, 25:26)
 
 # Functions
 
@@ -53,9 +61,13 @@ Number_of_Measurements_in_a_Day <- Number_of_Hours_in_a_Day * Number_of_Minutes_
 
 # Generating a list of station metadata
 
-Ports_Used_in_Station_CR1000_test <- I(list(Ports_Used_in_Station_CR1000_test))
-CR1000_test <- data.frame(Ports_Used = Ports_Used_in_Station_CR1000_test)
-Station_Data_List <- list(CR1000_test = CR1000_test)
+Ports_Used_in_Station_1 <- I(list(Ports_Used_in_Station_1))
+Ports_Used_in_Station_2 <- I(list(Ports_Used_in_Station_2))
+Ports_Used_in_Station_3 <- I(list(Ports_Used_in_Station_3))
+Station_1 <- data.frame(Ports_Used = Ports_Used_in_Station_1)
+Station_2 <- data.frame(Ports_Used = Ports_Used_in_Station_2)
+Station_3 <- data.frame(Ports_Used = Ports_Used_in_Station_3)
+Station_Data_List <- list(Station_1 = Station_1, Station_2 = Station_2, Station_3 = Station_3)
 Station_Data_List <- Station_Data_List[order(names(Station_Data_List))]
 
 
