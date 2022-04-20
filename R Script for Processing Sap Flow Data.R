@@ -19,7 +19,7 @@
 # Constants
 
 Working_Directory <- "C:/Sap Flow Data"
-Unique_Station_Names <- c("Station_1", "Station_2", "Statin_3")
+Unique_Station_Names <- c("Station_1", "Station_2", "Station_3")
 Number_of_Ports_Read_in_Each_Station <- 64
 Thermal_Diffusivity_of_Green_Wood <- 0.0019
 Wood_Density <- 700 # Units: kg * m ^ -3
