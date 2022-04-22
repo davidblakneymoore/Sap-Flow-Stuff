@@ -207,7 +207,8 @@ Sap_Flow_Data_List <- lapply(Sap_Flow_Data_List, function (x) {
 
 # Here, you will need to baseline your data. You could also calculate moving
 # averages or combine heat-ratio-method data with maximum-heat-ratio-method
-# data.
+# data. This step can be extremely complicated and I haven't provided any
+# code for this step in this script.
 
 # Calculate the sap flux densities
 
@@ -227,7 +228,30 @@ Sap_Flow_Data_List <- lapply(Sap_Flow_Data_List, function (x) {
 
 # Here, you can calculate total tree water use ('sap flow') using sap
 # velocities by taking into account the areas of influence of each
-# thermocouple.
+# thermocouple. I haven't included code for this step in this script
+# either.
+
+# You can average the wood temperatures from the upper and lower probes for
+# each sensor set to generate wood temperatures at the sensor level instead of
+# at the probe level. Wood temperature is occasionally used as a predictor
+# variable in certain models.
+
+Sap_Flow_List_by_Sensor <- lapply(seq_len(length(Ports_Used) / Number_of_Thermocouples_Per_Sensor / 2), function (x) {
+  Sap_Flow_Data[grep("Wood_Temperature", colnames(Sap_Flow_Data))][, ((Number_of_Thermocouples_Per_Sensor * 2 * x) - ((Number_of_Thermocouples_Per_Sensor * 2) - 1)):(Number_of_Thermocouples_Per_Sensor * 2 * x)]
+})
+Sap_Flow_List_by_Sensor_and_by_Thermocouple_Position <- lapply(Sap_Flow_List_by_Sensor, function (x) {
+  lapply(seq_len(length(Thermocouple_Indices)), function (y) {
+    x[, Thermocouple_Indices[[y]]]
+  })
+})
+Wood_Temperature_List <- lapply(Sap_Flow_List_by_Sensor_and_by_Thermocouple_Position, function (x) {
+  as.data.frame(lapply(x, function (y) {
+    rowMeans(y)
+  }))
+})
+Wood_Temperatures <- do.call('cbind', Wood_Temperature_List)
+colnames(Wood_Temperatures) <- paste("Wood_Temperature_Multiplexer_Ports", Multiplexer_Ports, sep = "_")
+Sap_Flow_Data <- cbind(Sap_Flow_Data, Wood_Temperatures)
 
 
 # Works Cited
