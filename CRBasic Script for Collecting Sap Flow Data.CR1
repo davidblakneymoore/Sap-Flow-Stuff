@@ -230,8 +230,8 @@ BeginProg
       i += 1
       j = 1
       SubScan (0, uSec, (Number_of_Sap_Flow_Thermocouples)/4)
-        TCSe (Wood_Temperature_Array_1(i, j), 4, mV2_5C, 1, TypeT, Reference_Temperature, 0, 0, _60Hz, 1, 0)
         PulsePort (2, 10000)
+        TCSe (Wood_Temperature_Array_1(i, j), 4, mV2_5C, 1, TypeT, Reference_Temperature, 0, 0, _60Hz, 1, 0)
         j += 4
       NextSubScan
       PortSet (1, 0)
@@ -253,8 +253,8 @@ BeginProg
       i += 1
       j = 1
       SubScan (0, uSec, Number_of_Sap_Flow_Thermocouples/4)
-        TCSe (After_Heat_Pulse_Temperature_Array_1(i, j), 4, mV2_5C, 1, TypeT, Reference_Temperature, 0, 0, _60Hz, 1, 0)
         PulsePort (2, 10000)
+        TCSe (After_Heat_Pulse_Temperature_Array_1(i, j), 4, mV2_5C, 1, TypeT, Reference_Temperature, 0, 0, _60Hz, 1, 0)
         j += 4
       NextSubScan
       PortSet (1, 0)
