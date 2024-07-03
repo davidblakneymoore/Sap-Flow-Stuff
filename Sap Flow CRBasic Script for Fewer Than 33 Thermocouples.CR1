@@ -209,14 +209,14 @@ Dim k ' This variable keeps track of how much time (in s) has elapsed after the 
 
 DataTable (Data_Table, True, -1)
   DataInterval (0, 15, Min, 0)
-  Average (1, Panel_Temperature, IEEE4, False)
-  Minimum (1, Big_Battery_Voltage, IEEE4, False, False)
-  Minimum (1, Small_Battery_Voltage, IEEE4, False, False)
+  Average (1, Panel_Temperature, FP2, False)
+  Minimum (1, Big_Battery_Voltage, FP2, False, False)
+  Minimum (1, Small_Battery_Voltage, FP2, False, False)
   Sample (Number_of_Sap_Flow_Thermocouples, Wood_Temperature(), IEEE4)
   Sample (Number_of_Sap_Flow_Thermocouples, After_Heat_Pulse_Temperature(), IEEE4)
   Sample (Number_of_Sap_Flow_Thermocouples, Max_After_Heat_Pulse_Temperature(), IEEE4)
   Sample (Number_of_Sap_Flow_Thermocouples, Max_After_Heat_Pulse_Temperature_MA(), IEEE4)
-  Sample (Number_of_Sap_Flow_Thermocouples, Time_of_Maximum_Temperature(), IEEE4)
+  Sample (Number_of_Sap_Flow_Thermocouples, Time_of_Maximum_Temperature(), FP2)
 EndTable
 
 ' The Main Program:
