@@ -1,4 +1,4 @@
-# Sap-Flow-Stuff
+# Sap Flow Stuff
 
 This repository contains two CRBasic programs that collects sap flow measurements using heat-pulse sap flow sensors read in single-ended mode. In this program, both the heat-ratio method (Burgess et al., 2001) and the maximum-heat-ratio method (Gutierrez Lopez et al., 2021) are used to measure sap flow. This program does not record raw sap flow data.
 
